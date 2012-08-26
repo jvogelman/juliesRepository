@@ -69,6 +69,8 @@ class Survey_Form_MatrixOfChoicesQuestion extends Survey_Form_QuestionEdit
 	
 	public function setRandomize($randomize) {
 		$this->randomize->setValue($randomize);
+		
+		
 	}
 	
 }
