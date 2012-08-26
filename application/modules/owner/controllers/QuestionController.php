@@ -232,6 +232,9 @@ class Owner_QuestionController extends Zend_Controller_Action
 						case enums_QuestionCategory::DescriptiveText:
 							$form = new Survey_Form_DescriptiveText;
 							break;
+						case enums_QuestionCategory::MatrixOfChoices:
+							$form = new Survey_Form_MatrixOfChoicesQuestion;
+							break;
 					}
 							
 					if ($form == null) {
