@@ -1,0 +1,141 @@
+body {
+  margin: 0; 
+  padding: 0; 
+  font-family: 'Verdana', sans-serif;
+  color: black;
+  background: #a5966e url(/img/gradientTan.jpg) repeat-x;
+}
+
+
+body a {
+  text-decoration: none;
+  font-weight: bolder;
+  color: brown;
+}
+
+body a:hover {
+  text-decoration: underline;
+}
+/*
+#header {
+  height: 100px;
+  background: Burlywood;
+  font-family: Georgia;
+  font-style: italic;
+}*/
+
+#navPanel {
+	background-color:black;
+	width:100%;
+	height:40px;
+}
+
+.navPanelLabel {
+	color:white;
+	cursor:pointer;
+}
+
+#navPanelEmpty {
+	width:75%
+}
+
+#mySurveysNavLink {
+	float: left;
+	left: 20px; 
+	top: 90px;
+}
+
+#logOutNavLink {
+	float: right;
+	top: 90px;
+}
+
+#logo {
+  float: left;
+  padding-left: 50px;
+  padding-top: 10px;  
+}
+
+#menu {
+  float: right;
+  padding-top: 55px;
+}
+
+#menu a {
+  color: white;
+  font-size: 12pt;
+  border: solid 4px white;
+  padding: 4px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+#menu a:hover {
+  color: red;
+  font-size: 12pt;
+  border: solid 4px red;
+  text-decoration: none;
+}
+
+
+#content {
+  min-height: 400px;  
+  padding-left: 50px;
+  padding-right: 50px;
+}
+
+#footer {
+  float: right;
+  font-size: smaller;
+  background: #2441F5;
+  padding-left: 20px;
+  color: white;
+}
+
+#footer a {
+  color: white;
+}
+
+form dd {
+  margin: 0px;  
+  padding-bottom: 10px;
+}
+
+form input {
+  font-size: 12pt;
+}
+
+form textarea {
+  font-size: 12pt;
+}
+
+form ul.errors {
+  padding: 0px;  
+  color: red;
+  list-style: none;
+}
+
+#darkBg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background: black;
+}
+
+#opaque {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: none;
+    background-color: black;
+    filter: alpha(opacity=30);
+    opacity: 0.3;
+}
+* html #opaque {
+    position: absolute;
+}

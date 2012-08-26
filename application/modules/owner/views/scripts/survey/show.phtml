@@ -1,0 +1,421 @@
+<?php
+require_once 'enums.php';
+
+?>
+
+
+<script type="text/javascript">
+
+
+/*
+	function fitToScreen(dialog) {
+		var extra = 40;
+		var dWidth = $(dialog).width();
+		var dHeight = $(dialog).height();
+		if (this.width - extra < dWidth) {
+			$(dialog).css('width', this.width - extra);
+		}
+		if (this.height - extra < dHeight) {
+			$(dialog).css('height', this.height - extra);
+		}
+	}*/
+	var editQuestionDialog;
+
+	function setupEditQuestionDialog(questionId, surveyId){
+		
+		//editQuestionDialog.dialog('option', 'position', 'center');    
+		 
+		setupMultipleChoiceDialog();
+    	setupEssayBoxDialog();
+    	setupDescriptiveTextDialog();
+    	setupMatrixOfChoicesDialog();
+
+    	// set css for the elements in the form
+    	$('.zendFormElement').css({'font-size': 'medium', 'margin': '1px'});
+    	$('button').css({'font-size': 'small'});
+    	$('#save').css({'font-size': 'small'});
+
+    	// fix the height of the dialog: if the dialog's too big, make sure it doesn't extend too far down
+    	var dialogHeight = parseInt($(editQuestionDialog).css('height'), 10);
+    	if (dialogHeight > window.innerHeight - 50) {
+        	editQuestionDialog.dialog('option', 'height', window.innerHeight - 50);
+    	} else {
+        	editQuestionDialog.dialog('option', 'height', 'auto');
+        	dialogHeight = parseInt($(editQuestionDialog).css('height'), 10);
+        	if (dialogHeight > window.innerHeight - 50) {
+            	editQuestionDialog.dialog('option', 'height', window.innerHeight - 50);
+        	}
+    	}
+
+
+		//editQuestionDialog.dialog('option', 'position', ['center']['top']);    
+		editQuestionDialog.dialog('option', 'position','top');    
+		
+    	// what if the Question Category changes?
+    	$('#questionType').change( function(){
+			$.post('/owner/question/shownewcategory',
+                	{'questionId' : questionId, 'surveyId' : surveyId, 'newCategory' : $('#questionType').val() },
+                    function (response) {
+                		if (response.substr(0,5) == "ERROR") {
+                           	alert("Error: " + response.substr(6));
+                        } else {
+                        	editQuestionDialog.html(response);
+
+                        	setupEditQuestionDialog();
+                        }
+	                }
+    		)
+    	});
+	}
+
+	function setupSelection(element, index){
+		var letterA = 'a';
+    	var selectionLetter = String.fromCharCode(letterA.charCodeAt(0) + index - 1);
+    	
+		$(element).prev()
+			.attr('for', 'selection-' + index)
+			.html(selectionLetter + '.');
+		$(element)
+			.attr('name', 'selection[' + index + ']')
+			.attr('id', 'selection-' + index);
+	}
+
+	function setupMultipleChoiceDialog(){
+		$('#fieldset-selection').append('<button id="addSelectionButton">Add</button>');
+
+		$('#fieldset-selection p').append('<button class="deleteSelectionButton">Delete</button>');
+
+		$('button').css({'font-size': 'small'});
+		
+    	$('#addSelectionButton').click(function(event) {
+        	event.preventDefault();
+        	var selectionIndex = $('.selection').size() + 1;
+        	//var letterA = 'a';
+        	//var selectionLetter = String.fromCharCode(letterA.charCodeAt(0) + selectionIndex - 1);
+			
+        	var currentLast = $('.selection:last').closest('p');
+			var newP = currentLast.clone();
+			
+			$(newP).hide();
+			$(newP).fadeIn('slow');
+			currentLast.after(newP);
+			/*
+			$('.selection:last').prev()
+				.attr('for', 'selection-' + selectionIndex)
+				.html(selectionLetter + '.');
+			$('.selection:last')
+				.attr('name', 'selection[' + selectionIndex + ']')
+				.attr('id', 'selection-' + selectionIndex)
+				.val('');*/
+			setupSelection('.selection:last', selectionIndex);
+			$('.selection:last').val('');
+    	});
+    	
+    	$('.deleteSelectionButton').live('click', function(event) {
+        	event.preventDefault();
+        	// get the index of the Delete button
+        	/*var selection = $(this).prev('textarea').attr('id');
+        	if (selection.substr(0, 10) == 'selection-') {
+            	var index = selection.substr(10);
+        	}*/
+
+        	// remove all html within and including the <p></p> tags
+			var parent = $(this).parent('p');
+			$(this).parent('p').fadeOut('slow');
+			$(this).parent('p').remove();
+
+			$('#fieldset-selection .selection').each(function(index) {
+				setupSelection(this, index + 1);
+				index++;
+			});
+        	
+    	});
+
+    	if ($('#otherField').attr('checked') != "checked") {
+    		$('#otherFieldSize').attr('disabled', 'disabled');
+    	}
+
+    	$('#otherField').click(function(){
+    		if ($('#otherField').attr('checked') != "checked") {
+        		$('#otherFieldSize').attr('disabled', 'disabled');
+        	} else {
+        		$('#otherFieldSize').removeAttr('disabled');
+        	}
+    	});
+        	
+	}
+
+
+	function setupEssayBoxDialog(){
+	}
+
+	function setupDescriptiveTextDialog(){
+	}
+
+	function setupMatrixOfChoicesDialog(){
+    	$('#editRow').css({'font-size': 'small'});
+    	$('#addChoicesRow').css({'font-size': 'small'});
+    	$('#editColumn').css({'font-size': 'small'});
+    	$('#addChoicesColumn').css({'font-size': 'small'});
+	}
+    
+    $(document).ready(function(){
+        
+		$("#EditDescriptionButton").click(function() {
+        	var description = $('#Description').val();
+            var surveyId = $('#SurveyId').val();
+            //run ajax
+            $.post('/owner/survey/updatedescription',
+            	{'description' : description, 'surveyId' : surveyId },
+                //callback function
+                function (response) {
+                         
+                   	if (response.substr(0,5) == "ERROR") {
+                       	alert("Error: " + response.substr(6));
+                    } else {
+                       	alert("Description updated");
+                        $("#Description").val(response);
+                    }
+                }
+            );
+                  
+        });
+		
+
+	       
+       	editQuestionDialog = $('<div id="editQuestionDialog"></div>')
+    		.html('<p>Edit Question</p>')
+    		.dialog({
+    			autoOpen: false,
+    			//title: 'Edit Question',
+    			modal: true,
+    			//width:'auto'
+    			width: 700,
+				//height: window.innerHeight - 50,
+				height: 'auto'
+
+
+				/// recommended but it doesn't work:
+				/*autoOpen: false,
+		        resizable: false,
+		        modal: true,
+		        width:'auto'*/
+    		});
+		
+		$('.questionEditButton').click(function() {
+			var sib = $(this).siblings('.questionId')[0];
+			var questionId = $(sib).val();
+            var surveyId = $('#SurveyId').val();
+            
+			$.post('/owner/question/showedit',
+                	{'questionId' : questionId, 'surveyId' : surveyId },
+                    //callback function
+                    function (response) {
+                             
+                       	if (response.substr(0,5) == "ERROR") {
+                           	alert("Error: " + response.substr(6));
+                        } else {
+							editQuestionDialog.dialog('open');		
+
+                        	editQuestionDialog.html(response);
+                        	
+                        	setupEditQuestionDialog(questionId, surveyId);   
+                        }
+                    }
+                );
+		});
+
+		
+   });
+</script>
+
+
+<style type="text/css">
+.descriptionTd {
+	vertical-align: top;
+}
+
+
+.PageDiv {
+	border-width: medium;
+ 	border-style:ridge;
+	padding: 3px;
+}
+
+.QuestionDiv {
+	border-width: thin;
+ 	border-style:ridge;
+	padding: 3px;
+	margin: 3px;
+}
+
+.QuestionHeaderTable {
+	width: 100%;
+}
+
+.matrixOfChoicesTable {
+	border-width: 1px;
+	border-color: white;
+	border-style: solid;
+}
+
+.matrixOfChoicesCell {
+	padding: 5px;
+}
+
+.matrixOfChoicesEvenRow {
+	background-color: white;
+}
+
+.editQuestionDialog {
+	font-size: small;
+}
+
+
+.formLabel {
+	font-size: medium;
+	vertical-align: top;
+}
+
+
+</style>
+
+<?php 
+$rec = $this->record[0]; 
+
+?>
+
+<input id="SurveyId" type="hidden" value="<?php echo $rec["ID"];?>" />
+
+
+<h2><?php echo $rec["Name"]; ?></h2>
+
+<table>
+	<tr>
+		<td class="descriptionTd">Description:</td>
+		<td class="descriptionTd"><textarea rows="3" cols="70" id="Description"><?php echo $rec["Description"]; ?></textarea></td>
+		<td class="descriptionTd"><input type="button" value="Edit" id="EditDescriptionButton" /></td>
+	</tr>
+</table>
+
+<?php 
+for ($i = 1; $i <= count($this->questions); $i++): 
+	$page = $this->questions[$i]; ?>
+	<br><div class="PageDiv"><i>Page <?php echo $i; ?></i>
+	<?php 
+	
+	// we must keep a local variable $questionIndex, as distinguished from $question["QuestionIndex"], since the latter will
+	// include "questions" that are really just descriptive text
+	$questionIndex = 1;
+	
+	for ($j = 1; $j <= count($page); $j++) :
+		$question = $page[$j]; 
+				
+		$select = $this->selections[$question["ID"]];
+		?>
+		
+		<div class="QuestionDiv">
+		<table class='QuestionHeaderTable'>
+			<tr>
+				<td width='90%'>Question Type: <?php echo $question["CategoryName"]; ?><br></td>
+				<td width='10%'><button class='questionEditButton'>Edit</button><button>Delete</button><input type='hidden' class='questionId' value='<?php echo $question["ID"]; ?>' /></td>
+			</tr>
+		</table>
+		
+		<table>
+			<?php if ( $question["CategoryName"] != "Descriptive Text"): ?>
+			<tr>
+				<td><h3><?php echo $questionIndex;?>.</h3></td>
+				<td>
+				<?php 
+					echo html_entity_decode($question["Text"]) . "<br>"; ?>
+				</td>
+			</tr>
+			<?php endif;?>
+			<tr>
+				<td></td>
+				<td>
+				<?php 
+					
+					switch ( $question["CategoryID"] ) {
+						case enums_QuestionCategory::MultipleChoiceOneAnswer:	
+							for ($k = 0; $k < count($select); $k++):
+								$s = $select[$k];
+								echo "<input type=\"radio\" name=\"QuestionID_" . $question["ID"] . "\" value=\"" . $k . "\">" . html_entity_decode($s["Text"]) . "</input><br>";
+							endfor;
+							$questionIndex++;
+							break;
+						case enums_QuestionCategory::MultipleChoiceMultipleAnswers: 
+							for ($k = 0; $k < count($select); $k++):
+								$s = $select[$k];
+								echo "<input type=\"checkbox\" name=\"QuestionID_" . $question["ID"] . "_" . $k  . "\" value=\"" . $k . "\" selection=\"multiple\">" . html_entity_decode($s["Text"]) . "</input><br>";
+							endfor;
+							$questionIndex++;
+							break;	
+						case enums_QuestionCategory::CommentEssayBox:
+							if ($question["SingleLine"]) {
+								echo "<input type='text' size='70'/>";
+							} else {
+								echo "<textarea rows='3' cols='70'></textarea>"; }
+							$questionIndex++;
+							break;
+						case enums_QuestionCategory::DescriptiveText:
+							$myFile = "testFile2.txt";
+							$fh = fopen($myFile, 'w');
+							fwrite($fh, html_entity_decode($question["Text"]));
+							
+							echo html_entity_decode($question["Text"]);
+							break;
+						case enums_QuestionCategory::MatrixOfChoices:			
+							// write table headings for the selections
+							
+							$select = $this->selections[$question["ID"]];?>
+							
+							<table class='matrixOfChoicesTable'>
+								<tr><td class='matrixOfChoicesCell'></td>
+								<?php 
+								for ($m = 0; $m < count($select); $m++) :
+									$s = $select[$m];
+									echo "<td class='matrixOfChoicesCell'>" . $s["Text"] . "</td>";
+								endfor;?>
+								</tr>
+								
+								<?php
+								// find all of the child question IDs and make radio buttons
+								for ($k = 0; $k < count($this->childQuestions[$question["ID"]]); $k++):
+									$child = $this->childQuestions[$question["ID"]][$k];
+									
+									$rowClass = "matrixOfChoicesEvenRow";
+									if ($k % 2 == 1) {
+										$rowClass = "matrixOfChoicesOddRow";
+									}
+								
+									echo "<tr class='" . $rowClass . "'><td class='matrixOfChoicesCell'>" . $child["Text"] . "</td>";
+									for ($m = 0; $m < count($select); $m++) :
+										$s = $select[$m];
+										echo "<td class='matrixOfChoicesCell'><input type='radio' name='QuestionID_" . $child["ID"] . "_" . $k . "'/></td>\n";
+									endfor;
+								endfor;?>
+
+							</table>
+							
+							<?php 
+							$questionIndex++;
+							break;
+						
+						}
+				?>
+				
+				</td>
+			</tr>
+			
+		</table>
+		</div>
+		<?php
+		
+		
+	endfor;
+?>
+	</div>
+<?php endfor; ?>
+

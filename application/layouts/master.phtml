@@ -1,0 +1,26 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+		"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<base href="/" />
+		<link rel="stylesheet" type="text/css" href="/css/master.css" />
+		<!--  <script type="text/javascript" src="jquery/jquery-1.7.2.js"></script>
+		<script type="text/javascript" src="jquery/master.js"></script>-->
+		<?php echo $this->jQuery();  ?>
+	</head>
+	<body> 
+		<div id="header">
+		<h1><img src="/img/logo.gif" /></h1>
+		<table id="navPanel"><tr>
+			<td class="navPanelLabel" id="mySurveys" onclick="location.assign('/owner/surveylist/index')">My Surveys</td>
+			<td class="navPanelLabel" id="createSurvey" onclick="location.assign('/owner/surveylist/create')">Create Survey</td>
+			<td id="navPanelEmpty"></td>
+			<td class="navPanelLabel" id="logInOut">Log In</td>
+		</tr></table>
+	    </div>
+    	<div id="content">
+      		<?php echo $this->layout()->content ?>
+    	</div> 
+  	</body>
+ </html>
