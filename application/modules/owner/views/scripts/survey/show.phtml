@@ -146,9 +146,9 @@ require_once 'enums.php';
     	$('#editColumn').css({'font-size': 'small'});
     	$('#addChoicesColumn').css({'font-size': 'small'});
     	
-    	var editRowDialog  = $('<div id="editRowDialog"></div>')
-		.html('<p>Enter the new text for this choice:<br><input type="text" size="50" id="editRowInput"/>' +
-				'<br><button id="editRowCancel">Cancel</button><button>Update</button></p>')
+    	var editChoicesDialog  = $('<div id="editChoicesDialog"></div>')
+		.html('<p>Enter the new text for this choice:<br><input type="text" size="50" id="editChoicesInput"/>' +
+				'<br><button id="editChoicesCancel">Cancel</button><button id="editChoicesUpdate">Update</button></p>')
 		.dialog({
 			autoOpen: false,
 			title: 'Edit Choice',
@@ -159,15 +159,55 @@ require_once 'enums.php';
 
 
     	$('#editRow').click(function() {
+        	editChoices('#rowChoices');
+    	});
+    	$('#editColumn').click(function() {
+        	editChoices('#columnChoices');
+    	});
 
-        	editRowDialog.dialog('open');
-        	var selected = $('#rowChoices option:selected').text();		
-    		$('#editRowInput').val(selected);
-    		$('#editRowCancel').click(function(){
-        		editRowDialog.dialog('close');
+    	function editChoices(select) {
+        	
+        	editChoicesDialog.dialog('open');
+        	// get the item currently selected
+        	var selected = $(select + ' option:selected').text();	
+
+    		// enter the selected string in the text box
+    		$('#editChoicesInput').val(selected);
+
+    		// set the Cancel button to close the dialog
+    		$('#editChoicesCancel').click(function(){
+        		editChoicesDialog.dialog('close');
+    		});  		
+
+    		// if Update button is clicked...
+    		$('#editChoicesUpdate').click(function(){
+
+        		// build arrays of the current items in the Select box (values and keys), replacing the old selected item with the new one
+        		var optionValues = new Array();
+        		var optionText = new Array();
+        		var index = 0;
+        		$(select + ' option').each(function () {
+        			optionText[index] = this.text;
+        			optionValues[index] = this.value;
+        			if (this.text == selected) {
+        				optionText[index] = $('#editChoicesInput').val();
+        			}
+        			index++;
+        		});
+        		
+        		// empty the Select and add the values from our arrays
+        		$(select).empty();
+        		for (var i = 0; i < index; i++) {
+            		var value = optionValues[i];
+            		var txt = optionText[i];
+        			$(select).append($("<option></option>")
+        		     	.attr("value", value).text(txt));
+        		}
+    			
+        		editChoicesDialog.dialog('close');
     		});
         	
-    	});
+    	}
 	}
     
     $(document).ready(function(){

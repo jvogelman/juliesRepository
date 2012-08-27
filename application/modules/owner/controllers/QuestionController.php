@@ -151,9 +151,9 @@ class Owner_QuestionController extends Zend_Controller_Action
 				
 				$response = $form;
 				// #### temporary:
-				/*$myFile = "testFile.txt";
+				$myFile = "testFile.txt";
 				$fh = fopen($myFile, 'w');
-				fwrite($fh, $response);*/
+				fwrite($fh, $response);
 			}
 			else {
 				$response = "ERROR:invalid input";
