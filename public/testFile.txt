@@ -26,9 +26,7 @@
     <option value="3" label="talk on the phone">talk on the phone</option>
 </select></p>
 
-<input type="submit" name="editRow" id="editRow" value="Edit Choice">
-
-<input type="submit" name="addChoicesRow" id="addChoicesRow" value="Add Choices"></dl></fieldset></dd>
+<input type="submit" name="updateChoicesRow" id="updateChoicesRow" value="Update Choices"></dl></fieldset></dd>
 <dt id="columnChoicesGroup-label">&#160;</dt><dd id="columnChoicesGroup-element"><fieldset id="fieldset-columnChoicesGroup"><dl>
 <p><label for="columnChoices" class="formLabel optional">Column Choices:</label>
 
@@ -38,9 +36,7 @@
     <option value="2" label="Never">Never</option>
 </select></p>
 
-<input type="submit" name="editColumn" id="editColumn" value="Edit Choice">
-
-<input type="submit" name="addChoicesColumn" id="addChoicesColumn" value="Add Choices"></dl></fieldset></dd>
+<input type="submit" name="updateChoicesColumn" id="updateChoicesColumn" value="Update Choices"></dl></fieldset></dd>
 
 <input type="submit" name="save" id="save" value="Save">
 

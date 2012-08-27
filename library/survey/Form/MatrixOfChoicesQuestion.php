@@ -20,8 +20,8 @@ class Survey_Form_MatrixOfChoicesQuestion extends Survey_Form_QuestionEdit
 		$editRow->setLabel('Edit Choice')
 			->setDecorators($this->buttonDecorators);
 		
-		$addChoicesRow = new Zend_Form_Element_Submit('addChoicesRow');
-		$addChoicesRow->setLabel('Add Choices')
+		$updateChoicesRow = new Zend_Form_Element_Submit('updateChoicesRow');
+		$updateChoicesRow->setLabel('Update Choices')
 			->setDecorators($this->buttonDecorators);
 		
 		$this->columnChoices = new Zend_Form_Element_Select('columnChoices');
@@ -35,8 +35,8 @@ class Survey_Form_MatrixOfChoicesQuestion extends Survey_Form_QuestionEdit
 		$editColumn->setLabel('Edit Choice')
 			->setDecorators($this->buttonDecorators);
 		
-		$addChoicesColumn = new Zend_Form_Element_Submit('addChoicesColumn');
-		$addChoicesColumn->setLabel('Add Choices')
+		$updateChoicesColumn = new Zend_Form_Element_Submit('updateChoicesColumn');
+		$updateChoicesColumn->setLabel('Update Choices')
 			->setDecorators($this->buttonDecorators);
 		
 		$this->randomize = new Zend_Form_Element_Checkbox('randomize');
@@ -46,14 +46,14 @@ class Survey_Form_MatrixOfChoicesQuestion extends Survey_Form_QuestionEdit
 				'class' => 'zendFormElement'));
 			
 		$this->addElement($this->rowChoices)
-			->addElement($editRow)
-			->addElement($addChoicesRow)
+			//->addElement($editRow)
+			->addElement($updateChoicesRow)
 			->addElement($this->columnChoices)
-			->addElement($editColumn)
-			->addElement($addChoicesColumn);
+			//->addElement($editColumn)
+			->addElement($updateChoicesColumn);
 
-		$this->addDisplayGroup(array('rowChoices', 'editRow', 'addChoicesRow'), 'rowChoicesGroup');
-		$this->addDisplayGroup(array('columnChoices', 'editColumn', 'addChoicesColumn'), 'columnChoicesGroup');
+		$this->addDisplayGroup(array('rowChoices', 'editRow', 'updateChoicesRow'), 'rowChoicesGroup');
+		$this->addDisplayGroup(array('columnChoices', 'editColumn', 'updateChoicesColumn'), 'columnChoicesGroup');
 			
 		$this->addElement($this->randomize);
 				

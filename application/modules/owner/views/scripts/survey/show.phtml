@@ -142,13 +142,13 @@ require_once 'enums.php';
 
 	function setupMatrixOfChoicesDialog(){
     	$('#editRow').css({'font-size': 'small'});
-    	$('#addChoicesRow').css({'font-size': 'small'});
+    	$('#updateChoicesRow').css({'font-size': 'small'});
     	$('#editColumn').css({'font-size': 'small'});
-    	$('#addChoicesColumn').css({'font-size': 'small'});
+    	$('#updateChoicesColumn').css({'font-size': 'small'});
     	
     	var editChoicesDialog  = $('<div id="editChoicesDialog"></div>')
 		.html('<p>Enter the new text for this choice:<br><input type="text" size="50" id="editChoicesInput"/>' +
-				'<br><button id="editChoicesCancel">Cancel</button><button id="editChoicesUpdate">Update</button></p>')
+				'<br/><button id="editChoicesCancel">Cancel</button><button id="editChoicesUpdate">Update</button></p>')
 		.dialog({
 			autoOpen: false,
 			title: 'Edit Choice',
@@ -157,14 +157,84 @@ require_once 'enums.php';
 			height: 'auto'
 		});
 
+		var updateChoicesDialog = $('<div id="updateChoicesDialog"></div>')
+			.html('<p>Adjust the choices below (one per line)<br/><textarea id="updateChoicesTextArea" rows="10" cols="25"></textarea>' +
+			'<br/><button id="updateChoicesUpdate">Update</button><button id="updateChoicesCancel">Cancel</button></p>')
+			.dialog({
+				autoOpen: false,
+				title: 'Update Choices',
+				modal: true,
+				width:'auto',
+				height: 'auto'
+			});
 
-    	$('#editRow').click(function() {
+
+    	/*$('#editRow').click(function() {
         	editChoices('#rowChoices');
     	});
     	$('#editColumn').click(function() {
         	editChoices('#columnChoices');
+    	});*/
+    	$('#updateChoicesRow').click(function() {
+        	updateChoices('#rowChoices');
+    	});
+    	$('#updateChoicesColumn').click(function() {
+        	updateChoices('#columnChoices');
     	});
 
+    	function updateChoices(select) {
+			updateChoicesDialog.dialog('open');
+			$('#updateChoicesTextArea').val('');
+			
+			// enter the current choices in the text area
+			$(select + ' option').each(function () {
+				var newText = $('#updateChoicesTextArea').val() + this.text + '\n';
+				$('#updateChoicesTextArea').val(newText);
+			}); 
+			
+    		// set the Cancel button to close the dialog
+    		$('#updateChoicesCancel').click(function(){
+    			updateChoicesDialog.dialog('close');
+    		});  		
+    		
+    		// if Update button is clicked...
+    		$('#updateChoicesUpdate').click(function(){
+				
+				// empty the Select 
+        		$(select).empty();
+
+        		// separate the text area by line feed to get each option and add it to the select  		
+				var str = $('#updateChoicesTextArea').val();
+        		
+				var i = str.indexOf('\n');
+				var index = 1;
+				while (i != -1) {
+					var val = str.substr(0, i);
+					$.trim(val);
+					if (val != '') {
+						$(select).append($("<option></option>")
+	        				.attr("value", index).text(val));
+					}
+    		     	
+					if (i == str.length - 1) {
+						str = '';
+						break;
+					}
+					str = str.substr(i + 1);
+					i = str.indexOf('\n');
+					index++;
+				}
+				// if there's anything remaining, add it to the select as well
+				$.trim(str);
+				if (str != '') {
+					$(select).append($("<option></option>")
+	        			.attr("value", index).text(str));
+				}
+
+    			updateChoicesDialog.dialog('close');
+    		});
+    	}
+/*
     	function editChoices(select) {
         	
         	editChoicesDialog.dialog('open');
@@ -207,7 +277,7 @@ require_once 'enums.php';
         		editChoicesDialog.dialog('close');
     		});
         	
-    	}
+    	}*/
 	}
     
     $(document).ready(function(){
