@@ -19,7 +19,37 @@ require_once 'enums.php';
 			$(dialog).css('height', this.height - extra);
 		}
 	}*/
-	var editQuestionDialog;
+	
+	var editQuestionDialog = $('<div id="editQuestionDialog"></div>')
+	.html('<p>Edit Question</p>')
+	.dialog({
+		autoOpen: false,
+		//title: 'Edit Question',
+		modal: true,
+		//width:'auto'
+		width: 700,
+		//height: window.innerHeight - 50,
+		height: 'auto'
+
+
+		/// recommended but it doesn't work:
+		/*autoOpen: false,
+        resizable: false,
+        modal: true,
+        width:'auto'*/
+	});
+	
+	// this is for the MatrixOfChoices edit dialog
+	var updateChoicesDialog = $('<div id="updateChoicesDialog"></div>')
+		.html('<p>Adjust the choices below (one per line)<br/><textarea id="updateChoicesTextArea" rows="10" cols="25"></textarea>' +
+		'<br/><button id="updateChoicesUpdate">Update</button><button id="updateChoicesCancel">Cancel</button></p>')
+		.dialog({
+			autoOpen: false,
+			title: 'Update Choices',
+			modal: true,
+			width:'auto',
+			height: 'auto'
+		});
 
 	function setupEditQuestionDialog(questionId, surveyId){
 		
@@ -157,17 +187,6 @@ require_once 'enums.php';
 			height: 'auto'
 		});
 
-		var updateChoicesDialog = $('<div id="updateChoicesDialog"></div>')
-			.html('<p>Adjust the choices below (one per line)<br/><textarea id="updateChoicesTextArea" rows="10" cols="25"></textarea>' +
-			'<br/><button id="updateChoicesUpdate">Update</button><button id="updateChoicesCancel">Cancel</button></p>')
-			.dialog({
-				autoOpen: false,
-				title: 'Update Choices',
-				modal: true,
-				width:'auto',
-				height: 'auto'
-			});
-
 
     	/*$('#editRow').click(function() {
         	editChoices('#rowChoices');
@@ -304,25 +323,6 @@ require_once 'enums.php';
 		
 
 	       
-       	editQuestionDialog = $('<div id="editQuestionDialog"></div>')
-    		.html('<p>Edit Question</p>')
-    		.dialog({
-    			autoOpen: false,
-    			//title: 'Edit Question',
-    			modal: true,
-    			//width:'auto'
-    			width: 700,
-				//height: window.innerHeight - 50,
-				height: 'auto'
-
-
-				/// recommended but it doesn't work:
-				/*autoOpen: false,
-		        resizable: false,
-		        modal: true,
-		        width:'auto'*/
-    		});
-		
 		$('.questionEditButton').click(function() {
 			var sib = $(this).siblings('.questionId')[0];
 			var questionId = $(sib).val();

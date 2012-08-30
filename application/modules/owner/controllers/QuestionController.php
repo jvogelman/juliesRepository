@@ -458,6 +458,19 @@ class Owner_QuestionController extends Zend_Controller_Action
 				// nothing left to do, show the survey page again
 				$this->_redirect('/owner/survey/show');
 				break;
+			case enums_QuestionCategory::MatrixOfChoices:
+
+				$form = new Survey_Form_MatrixOfChoicesQuestion;
+				
+				if ($form->isValid($this->getRequest()->getPost()))
+				{
+					
+				} else {
+					throw new Zend_Controller_Action_Exception('Input is invalid');
+				}
+				
+				$this->_redirect('/owner/survey/show');
+				break;
 			default:
 				throw new Zend_Controller_Action_Exception('Currently unable to handle questions of type ' . $questionType);
 			
