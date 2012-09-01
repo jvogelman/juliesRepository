@@ -512,6 +512,8 @@ class Owner_QuestionController extends Zend_Controller_Action
 						$cq->save();
 					}
 					
+
+					
 					// Update the column choices (these are the entries in the Selection table for this question)
 					// Delete the old ones and re-add
 					$q = Doctrine_Query::create()

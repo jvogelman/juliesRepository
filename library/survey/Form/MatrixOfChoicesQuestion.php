@@ -81,7 +81,7 @@ class Survey_Form_MatrixOfChoicesQuestion extends Survey_Form_QuestionEdit
 		// add these to hiddenRowChoices as well
 		$str = '';
 		foreach ($rows as $key => $value) {
-			$str .= $key . ',' . $value . ','; 
+			$str .= $value . ','; 
 		}
 		$this->hiddenRowChoices->setValue($str);
 	}
@@ -91,7 +91,7 @@ class Survey_Form_MatrixOfChoicesQuestion extends Survey_Form_QuestionEdit
 		// add these to hiddenColumnChoices as well
 		$str = '';
 		foreach ($columns as $key => $value) {
-			$str .= $key . ',' . $value . ','; 
+			$str .= $value . ','; 
 		}
 		$this->hiddenColumnChoices->setValue($str);
 	}
