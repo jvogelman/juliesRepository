@@ -488,7 +488,29 @@ class Owner_QuestionController extends Zend_Controller_Action
 					
 					// Update the row choices (these are the child questions of this question)
 					// Delete the old ones and re-add
+					$q = Doctrine_Query::create()
+						->delete('Survey_Model_Question q')
+						->addWhere('q.ParentQuestionID = ?', $input->questionId);
+					$q->execute();
 					
+					// hiddenRowChoices value is comma delimited
+					$rowChoices = $this->getRequest()->getParam('hiddenRowChoices');
+					$i = 1;
+					while (strpos($rowChoices, ',')) {
+						$comma = strpos($rowChoices, ',');
+						$cq = new Survey_Model_Question;
+						$cq->Text = substr($rowChoices, 0, $comma);
+						$cq->SurveyID = $question[0]['SurveyID'];
+						$cq->QuestionIndex = $i++;
+						$cq->PageNum = $question[0]['PageNum'];
+						$cq->CategoryID = enums_QuestionCategory::MatrixOfChoicesChild;
+						$cq->ParentQuestionID = $input->questionId;
+						$cq->RequireAnswer = $input->requireAnswer;
+						
+						$rowChoices = substr($rowChoices, $comma + 1);
+					
+						$cq->save();
+					}
 					
 					// Update the column choices (these are the entries in the Selection table for this question)
 					// Delete the old ones and re-add
@@ -500,13 +522,10 @@ class Owner_QuestionController extends Zend_Controller_Action
 					// hiddenColumnChoices value is comma delimited
 					$columnChoices = $this->getRequest()->getParam('hiddenColumnChoices');
 					$i = 1;
-					
-
-					//throw new Zend_Controller_Action_Exception('just a test: ' . $columnChoices . ':' . strpos($columnChoices, ','));
 					while (strpos($columnChoices, ',')) {
 						$comma = strpos($columnChoices, ',');
 						$s = new Survey_Model_Selection;
-						$s->SelectionIndex = $i;
+						$s->SelectionIndex = $i++;
 						$s->Text = substr($columnChoices, 0, $comma);
 						$s->QuestionID = $input->questionId;
 						$columnChoices = substr($columnChoices, $comma + 1);

@@ -61,12 +61,19 @@ class Owner_SurveyController extends Zend_Controller_Action
 				$questionId = $q["ID"];
 				$page = $q["PageNum"];
 				$indexInPage = $q["QuestionIndex"];
-				if ($q["CategoryName"] != "Matrix of Choices Child") {
+				if ($q["CategoryName"] == 'Matrix of Choices') {
+					if (!in_array($questionId, $childQuestions)) {
+						$childQuestions[$questionId] = array();
+					}
 					$quest[$page][$indexInPage] = $q;
-				} else {
+				}
+				else if ($q["CategoryName"] == "Matrix of Choices Child"){
 					$parentQuestionId = $q["ParentQuestionID"];
 					$childQuestions[$parentQuestionId][] = $q;
 				}
+				else {
+					$quest[$page][$indexInPage] = $q;
+				} 
 
 				$q = Doctrine_Query::create()
 					->from('Survey_Model_Selection s')
