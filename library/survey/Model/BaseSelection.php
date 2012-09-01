@@ -21,12 +21,22 @@ abstract class Survey_Model_BaseSelection extends Doctrine_Record
     public function setTableDefinition()
     {
         $this->setTableName('selection');
+        
+        $this->hasColumn('ID', 'integer', 4, array(
+        		'type' => 'integer',
+        		'length' => 4,
+        		'fixed' => false,
+        		'unsigned' => false,
+        		'primary' => true,
+        		'autoincrement' => true,
+        ));
+        
         $this->hasColumn('SelectionIndex', 'integer', 4, array(
              'type' => 'integer',
              'length' => 4,
              'fixed' => false,
              'unsigned' => false,
-             'primary' => true,
+             'primary' => false,
              'autoincrement' => false,
              ));
         $this->hasColumn('Text', 'string', 200, array(

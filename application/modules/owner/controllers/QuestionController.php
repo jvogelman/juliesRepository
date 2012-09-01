@@ -134,6 +134,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 								->from('Survey_Model_Selection s')
 								->where('s.QuestionID = ' . $input->questionId);
 							$selections = $q->fetchArray();
+							$formSelections = array();
 							foreach ($selections as $selection) {
 								$formSelections[] = $selection['Text'];
 							}
@@ -464,9 +465,59 @@ class Owner_QuestionController extends Zend_Controller_Action
 				
 				if ($form->isValid($this->getRequest()->getPost()))
 				{
+					// is this question ID already in the MatrixOfChoicesQuestion table?
+					$q = Doctrine_Query::create()
+					->from('Survey_Model_Matrixofchoicesquestion s')
+					->where('s.QuestionID = ?', $input->questionId);
+					$mcqs = $q->fetchArray();
+	
+					if (sizeof($mcqs) == 0) {
+						// not in there, so add it
+						$mcq = new Survey_Model_Matrixofchoicesquestion;
+						$mcq->QuestionID = $input->questionId;
+						$mcq->RandomizeAnswers = $this->getRequest()->getParam('randomize');
+						$mcq->save();
+					} else {
+						// already in there, so update it
+						$q = Doctrine_Query::create()
+							->update('Survey_Model_Matrixofchoicesquestion s')
+							->set('s.RandomizeAnswers', '?', $this->getRequest()->getParam('randomize'))
+							->where('s.QuestionID = ?', $input->questionId);
+						$q->execute();
+					}
+					
+					// Update the row choices (these are the child questions of this question)
+					// Delete the old ones and re-add
+					
+					
+					// Update the column choices (these are the entries in the Selection table for this question)
+					// Delete the old ones and re-add
+					$q = Doctrine_Query::create()
+						->delete('Survey_Model_Selection s')
+						->addWhere('s.QuestionID = ?', $input->questionId);
+					$q->execute();
+					
+					// hiddenColumnChoices value is comma delimited
+					$columnChoices = $this->getRequest()->getParam('hiddenColumnChoices');
+					$i = 1;
+					
+
+					//throw new Zend_Controller_Action_Exception('just a test: ' . $columnChoices . ':' . strpos($columnChoices, ','));
+					while (strpos($columnChoices, ',')) {
+						$comma = strpos($columnChoices, ',');
+						$s = new Survey_Model_Selection;
+						$s->SelectionIndex = $i;
+						$s->Text = substr($columnChoices, 0, $comma);
+						$s->QuestionID = $input->questionId;
+						$columnChoices = substr($columnChoices, $comma + 1);
+					
+						$s->save();
+					}
+					
 					
 				} else {
-					throw new Zend_Controller_Action_Exception('Input is invalid');
+					
+					throw new Zend_Controller_Action_Exception('Input is invalid: ' . print_r($form->getErrors()));
 				}
 				
 				$this->_redirect('/owner/survey/show');

@@ -195,13 +195,13 @@ require_once 'enums.php';
         	editChoices('#columnChoices');
     	});*/
     	$('#updateChoicesRow').click(function() {
-        	updateChoices('#rowChoices');
+        	updateChoices('#rowChoices', '#hiddenRowChoices');
     	});
     	$('#updateChoicesColumn').click(function() {
-        	updateChoices('#columnChoices');
+        	updateChoices('#columnChoices', '#hiddenColumnChoices');
     	});
 
-    	function updateChoices(select) {
+    	function updateChoices(select, hidden) {
 			updateChoicesDialog.dialog('open');
 			$('#updateChoicesTextArea').val('');
 			
@@ -219,8 +219,9 @@ require_once 'enums.php';
     		// if Update button is clicked...
     		$('#updateChoicesUpdate').click(function(){
 				
-				// empty the Select 
+				// empty the Select and the hidden tag
         		$(select).empty();
+        		$(hidden).val('');
 
         		// separate the text area by line feed to get each option and add it to the select  		
 				var str = $('#updateChoicesTextArea').val();
@@ -233,6 +234,8 @@ require_once 'enums.php';
 					if (val != '') {
 						$(select).append($("<option></option>")
 	        				.attr("value", index).text(val));
+        				var hiddenVal = $(hidden).val();
+        				$(hidden).val(hiddenVal + /*index + ',' + */ val + ',');
 					}
     		     	
 					if (i == str.length - 1) {
@@ -248,8 +251,11 @@ require_once 'enums.php';
 				if (str != '') {
 					$(select).append($("<option></option>")
 	        			.attr("value", index).text(str));
+					var hiddenVal = $(hidden).val();
+    				$(hidden).val(hiddenVal + /*index + ',' + */ str + ',');
 				}
 
+				var temp = $(hidden);
     			updateChoicesDialog.dialog('close');
     		});
     	}

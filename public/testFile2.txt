@@ -1,1 +1,1 @@
-<b>Some text</b>
+a bit of descriptive text
