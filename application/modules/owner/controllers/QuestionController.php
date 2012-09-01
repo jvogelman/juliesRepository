@@ -142,6 +142,8 @@ class Owner_QuestionController extends Zend_Controller_Action
 							
 							// set "randomize"
 							$form->setRandomize($question[0]['RandomizeAnswers']);
+							// set "require answer"
+							$form->setRequireAnswer($question[0]['RequireAnswer']);
 							
 							break;
 						default:
@@ -510,8 +512,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 						$rowChoices = substr($rowChoices, $comma + 1);
 					
 						$cq->save();
-					}
-					
+					}				
 
 					
 					// Update the column choices (these are the entries in the Selection table for this question)

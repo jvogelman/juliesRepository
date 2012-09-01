@@ -1,2 +1,17 @@
-How often do you do the following activities?
-How often do you do the following activities?
+<form enctype="application/x-www-form-urlencoded" action="owner/question/save/4" method="post">
+<p><label for="question" class="formLabel required">Text:</label>
+
+<textarea name="question" id="question" class="zendFormElement" rows="12" cols="70">&lt;b&gt;a bit of descriptive text&lt;/b&gt;&lt;a href=&quot;google.com&quot;&gt;google&lt;/a&gt;</textarea></p>
+<p><label for="questionType" class="formLabel optional">Question Type:</label>
+
+<select name="questionType" id="questionType" class="zendFormElement">
+    <option value="1" label="Multiple Choice - one answer">Multiple Choice - one answer</option>
+    <option value="2" label="Multiple Choice - multiple answers">Multiple Choice - multiple answers</option>
+    <option value="3" label="Comment/Essay Box">Comment/Essay Box</option>
+    <option value="4" label="Descriptive Text" selected="selected">Descriptive Text</option>
+    <option value="5" label="Matrix of Choices">Matrix of Choices</option>
+</select></p>
+
+<input type="submit" name="save" id="save" value="Save">
+
+<button name="cancel" id="cancel" type="button" onclick='editQuestionDialog.dialog("close");'>Cancel</button></form>

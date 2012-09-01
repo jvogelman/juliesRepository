@@ -171,12 +171,12 @@ require_once 'enums.php';
 	}
 
 	function setupMatrixOfChoicesDialog(){
-    	$('#editRow').css({'font-size': 'small'});
+    	//$('#editRow').css({'font-size': 'small'});
     	$('#updateChoicesRow').css({'font-size': 'small'});
-    	$('#editColumn').css({'font-size': 'small'});
+    	//$('#editColumn').css({'font-size': 'small'});
     	$('#updateChoicesColumn').css({'font-size': 'small'});
     	
-    	var editChoicesDialog  = $('<div id="editChoicesDialog"></div>')
+    	/*var editChoicesDialog  = $('<div id="editChoicesDialog"></div>')
 		.html('<p>Enter the new text for this choice:<br><input type="text" size="50" id="editChoicesInput"/>' +
 				'<br/><button id="editChoicesCancel">Cancel</button><button id="editChoicesUpdate">Update</button></p>')
 		.dialog({
@@ -188,7 +188,7 @@ require_once 'enums.php';
 		});
 
 
-    	/*$('#editRow').click(function() {
+    	$('#editRow').click(function() {
         	editChoices('#rowChoices');
     	});
     	$('#editColumn').click(function() {
@@ -213,6 +213,7 @@ require_once 'enums.php';
 			
     		// set the Cancel button to close the dialog
     		$('#updateChoicesCancel').click(function(){
+    			$('#updateChoicesUpdate').unbind('click');
     			updateChoicesDialog.dialog('close');
     		});  		
     		
@@ -255,7 +256,7 @@ require_once 'enums.php';
     				$(hidden).val(hiddenVal + /*index + ',' + */ str + ',');
 				}
 
-				var temp = $(hidden);
+				$('#updateChoicesUpdate').unbind('click');
     			updateChoicesDialog.dialog('close');
     		});
     	}
