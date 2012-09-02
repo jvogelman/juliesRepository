@@ -2,6 +2,7 @@
 
 
 class enums_QuestionCategory {
+	const Undefined = 999;
 	const MultipleChoiceOneAnswer = 1;
 	const MultipleChoiceMultipleAnswers = 2;
 	const CommentEssayBox = 3;

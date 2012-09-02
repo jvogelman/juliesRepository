@@ -66,6 +66,11 @@ class Owner_QuestionController extends Zend_Controller_Action
 				else {
 					
 					switch ($question[0]['CategoryID']){
+						case enums_QuestionCategory::Undefined:
+							$form = new Survey_Form_UndefinedCategoryQuestion;
+							$form->setQuestionId($question[0]['ID']);
+							
+							break;
 						case enums_QuestionCategory::MultipleChoiceOneAnswer:
 						case enums_QuestionCategory::MultipleChoiceMultipleAnswers:
 							$form = new Survey_Form_MultipleChoiceQuestion;
@@ -167,6 +172,103 @@ class Owner_QuestionController extends Zend_Controller_Action
 		}			
 		
 		echo $response; 
+		
+	}
+	
+	public function addAction() {
+
+		
+		
+		try
+		{
+			$this->_helper->viewRenderer->setNoRender();
+			$this->_helper->getHelper('layout')->disableLayout();
+								
+			// "get" variables: survey ID, page, new question index
+			
+			$validators = array(
+					'surveyId' => array('NotEmpty', 'Int'),
+					'page' => array('NotEmpty', 'Int'),
+					'index' => array('NotEmpty', 'Int')
+			);
+				
+			$filters = array(
+					'surveyId' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+					'page' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+					'index' => array('HtmlEntities', 'StripTags', 'StringTrim')
+			);
+				
+			$input = new Zend_Filter_Input($filters, $validators);
+			$input->setData($this->getRequest()->getParams());			
+			
+
+
+			if ($input->isValid())	{			
+				$questionID = $this->addQuestionToPage($input->surveyId, $input->page, $input->index);
+		
+				// redirect to showEditAction
+				$this->_redirect('/owner/question/showedit?surveyId=' . $input->surveyId . '&questionId=' . $questionID);
+			}
+		}
+		catch (Exception $e){
+			$response = "ERROR:page threw exception: " . $e;
+		}
+		
+		echo $response;
+	}
+	
+	public function addQuestionToPage($surveyId, $page, $index) {
+		
+		session_start();
+		
+		// get session variable for user id
+		if (!isset($_SESSION["userId"])) {
+			throw new Zend_Controller_Action_Exception("session variable 'userId' not found");
+		}
+		
+		$userId = $_SESSION["userId"];
+	
+		// first update the other indeces in this page
+		$q = Doctrine_Query::create()
+			->select('q.*, s.OwnerID')
+			->from('Survey_Model_Question q')
+			->leftJoin('q.Survey_Model_Survey s')
+			->where('q.SurveyID = ' . $surveyId)
+			->addWhere('q.PageNum = ' . $page)
+			->addWhere('s.OwnerID = ' . $userId)
+			->addWhere('q.QuestionIndex >= ' . $index);
+		$questions = $q->fetchArray();
+		
+		foreach ($questions as $question) {
+			$q = Doctrine_Query::create()
+				->update('Survey_Model_Question q')
+				->set('q.QuestionIndex' ,'?',  $question['QuestionIndex'] + 1)
+				->where('q.ID = ?', $question['ID']);
+			$q->execute();
+		}
+		
+		// add new question to database
+		$q = new Survey_Model_Question;
+		$q->Text = '';
+		$q->SurveyID = $surveyId;
+		$q->QuestionIndex = $index;
+		$q->PageNum = $page;
+		$q->CategoryID = enums_QuestionCategory::Undefined;
+		$q->RequireAnswer = 0;
+		$q->save();
+		$id = $q['ID'];
+		
+		return $id;
+	}
+	
+	public function deleteQuestionFromPage($surveyId, $page, $index) {
+		// remove this question from database
+	
+		// update the other indeces in this page
+	
+	}
+	
+	public function deleteAction(){
 		
 	}
 	

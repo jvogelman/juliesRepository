@@ -48,22 +48,23 @@ abstract class Survey_Form_QuestionEdit extends Zend_Form
 		$this->questionType = new Zend_Form_Element_Select('questionType');
 		$this->questionType->setLabel('Question Type:')
 			->setMultiOptions(array(
-				'1' => 'Multiple Choice - one answer',
-				'2' => 'Multiple Choice - multiple answers',
-				'3'	=> 'Comment/Essay Box',
-				'4' => 'Descriptive Text',
-				'5' => 'Matrix of Choices'
+				'-1' => '',
+				enums_QuestionCategory::MultipleChoiceOneAnswer => 'Multiple Choice - one answer',
+				enums_QuestionCategory::MultipleChoiceMultipleAnswers => 'Multiple Choice - multiple answers',
+				enums_QuestionCategory::CommentEssayBox	=> 'Comment/Essay Box',
+				enums_QuestionCategory::DescriptiveText => 'Descriptive Text',
+				enums_QuestionCategory::MatrixOfChoices => 'Matrix of Choices'
 			))
 			->setOptions(array(
 				'class' => 'zendFormElement'))
-			->setValue('Multiple Choice - one answer')
+			->setValue('-1')
 			->setDecorators($this->elementDecorators);
 
 		
 		$this->requireAnswer = new Zend_Form_Element_Checkbox('requireAnswer');
 		$this->requireAnswer->setLabel('Require an answer to this question')
-		->setDecorators($this->checkboxDecorators)
-		->setOptions(array(
+			->setDecorators($this->checkboxDecorators)
+			->setOptions(array(
 				'class' => 'zendFormElement'));
 
 

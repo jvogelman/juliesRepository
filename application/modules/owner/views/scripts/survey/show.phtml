@@ -80,13 +80,12 @@ require_once 'enums.php';
     	}
 
 
-		editQuestionDialog.dialog('option', 'position','top');    
+    	editQuestionDialog.dialog('option', 'position','top');    
 
 		
     	// what if the Question Category changes?
     	$('#questionType').change( function(){
-        	var cat = $('#questionType').val();
-			$.post('/owner/question/shownewcategory',
+        	$.post('/owner/question/shownewcategory',
                 	{'questionId' : questionId, 'surveyId' : surveyId, 'newCategory' : $('#questionType').val() },
                     function (response) {
                 		if (response.substr(0,5) == "ERROR") {
@@ -98,6 +97,18 @@ require_once 'enums.php';
                         }
 	                }
     		)
+    	});
+
+    	// validate user input on submit
+    	$(editQuestionDialog).submit( function(e){
+        	if ($('#questionType').val() == -1) {
+            	alert('Please select a Question type first');
+            	e.preventDefault();
+        	}
+        	if ($('#question').val() == '') {
+            	alert('Please enter a description for the Question first');
+            	e.preventDefault();
+        	}
     	});
 	}
 
@@ -336,10 +347,10 @@ require_once 'enums.php';
 			var page = $(this).siblings('.page')[0];
 			var newQuestionIndex = $(this).siblings('.newQuestionIndex')[0];
             //run ajax
-            $.post('/owner/question/add', 
+            $.get('/owner/question/add', 
             	{ 'surveyId' : surveyId, 
-            	  'page' : page,
-            	  'index' : newQuestionIndex },
+            	  'page' : page.value,
+            	  'index' : newQuestionIndex.value },
                   //callback function
                   function (response) {
                            
@@ -586,7 +597,7 @@ for ($i = 1; $i <= count($this->questions); $i++): // go through the pages
 		<p align='center'>
 			<button class='addQuestionButton'>Add Question</button>
 			<input type='hidden' class='page' value='<?php echo $i; ?>'></input>
-			<input type='hidden' class='newQuestionIndex' value='<?php echo $question['QuestionIndex']; ?>'></input>
+			<input type='hidden' class='newQuestionIndex' value='<?php echo $question['QuestionIndex'] + 1; ?>'></input>
 			<?php if ($j < count($page)) {
 				echo '<button>Divide Page Here</button>';
 			} ?>
