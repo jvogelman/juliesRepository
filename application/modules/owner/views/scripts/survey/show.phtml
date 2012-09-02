@@ -51,7 +51,7 @@ require_once 'enums.php';
 			height: 'auto'
 		});
 
-	function setupEditQuestionDialog(questionId, surveyId){
+	function setupEditQuestionDialog(surveyId){
 		
 		//editQuestionDialog.dialog('option', 'position', 'center');    
 		 
@@ -59,6 +59,8 @@ require_once 'enums.php';
     	setupEssayBoxDialog();
     	setupDescriptiveTextDialog();
     	setupMatrixOfChoicesDialog();
+
+    	var questionId = $('#hiddenQuestionId').val();
 
     	// set css for the elements in the form
     	$('.zendFormElement').css({'font-size': 'medium', 'margin': '1px'});
@@ -78,11 +80,12 @@ require_once 'enums.php';
     	}
 
 
-		//editQuestionDialog.dialog('option', 'position', ['center']['top']);    
 		editQuestionDialog.dialog('option', 'position','top');    
+
 		
     	// what if the Question Category changes?
     	$('#questionType').change( function(){
+        	var cat = $('#questionType').val();
 			$.post('/owner/question/shownewcategory',
                 	{'questionId' : questionId, 'surveyId' : surveyId, 'newCategory' : $('#questionType').val() },
                     function (response) {
@@ -91,7 +94,7 @@ require_once 'enums.php';
                         } else {
                         	editQuestionDialog.html(response);
 
-                        	setupEditQuestionDialog();
+                        	setupEditQuestionDialog(surveyId);
                         }
 	                }
     		)
@@ -327,7 +330,32 @@ require_once 'enums.php';
             );
                   
         });
-		
+
+		$('.addQuestionButton').click(function() {
+            var surveyId = $('#SurveyId').val();
+			var page = $(this).siblings('.page')[0];
+			var newQuestionIndex = $(this).siblings('.newQuestionIndex')[0];
+            //run ajax
+            $.post('/owner/question/add', 
+            	{ 'surveyId' : surveyId, 
+            	  'page' : page,
+            	  'index' : newQuestionIndex },
+                  //callback function
+                  function (response) {
+                           
+                     	if (response.substr(0,5) == "ERROR") {
+                         	alert("Error: " + response.substr(6));
+                      	} else {
+							editQuestionDialog.dialog('open');		
+
+                      	editQuestionDialog.html(response);
+                      	
+                      	setupEditQuestionDialog(surveyId);   
+                      }
+                  }
+              );
+
+		});
 
 	       
 		$('.questionEditButton').click(function() {
@@ -347,7 +375,7 @@ require_once 'enums.php';
 
                         	editQuestionDialog.html(response);
                         	
-                        	setupEditQuestionDialog(questionId, surveyId);   
+                        	setupEditQuestionDialog(surveyId);   
                         }
                     }
                 );
@@ -405,6 +433,11 @@ require_once 'enums.php';
 	vertical-align: top;
 }
 
+button {
+	background-color:DarkSlateGrey;
+	color:LightCyan;
+}
+
 
 </style>
 
@@ -425,11 +458,18 @@ $rec = $this->record[0];
 		<td class="descriptionTd"><input type="button" value="Edit" id="EditDescriptionButton" /></td>
 	</tr>
 </table>
+<br>
+<p align='center'><button>Add Page</button></p>
 
 <?php 
-for ($i = 1; $i <= count($this->questions); $i++): 
+for ($i = 1; $i <= count($this->questions); $i++): // go through the pages
 	$page = $this->questions[$i]; ?>
 	<br><div class="PageDiv"><i>Page <?php echo $i; ?></i>
+	<p align='center'>
+		<button class='addQuestionButton'>Add Question</button>
+		<input type='hidden' class='page' value='<?php echo $i; ?>'></input>
+		<input type='hidden' class='newQuestionIndex' value='1'></input>
+	</p>
 	<?php 
 	
 	// we must keep a local variable $questionIndex, as distinguished from $question["QuestionIndex"], since the latter will
@@ -445,8 +485,11 @@ for ($i = 1; $i <= count($this->questions); $i++):
 		<div class="QuestionDiv">
 		<table class='QuestionHeaderTable'>
 			<tr>
-				<td width='90%'>Question Type: <?php echo $question["CategoryName"]; ?><br></td>
-				<td width='10%'><button class='questionEditButton'>Edit</button><button>Delete</button><input type='hidden' class='questionId' value='<?php echo $question["ID"]; ?>' /></td>
+				<td width='80%'>Question Type: <?php echo $question["CategoryName"]; ?><br></td>
+				<td width='20%'>
+					<button class='questionEditButton'>Edit</button><button>Delete</button><button>Move</button><button>Copy</button>
+					<input type='hidden' class='questionId' value='<?php echo $question["ID"]; ?>' />
+				</td>
 			</tr>
 		</table>
 		
@@ -539,11 +582,24 @@ for ($i = 1; $i <= count($this->questions); $i++):
 			
 		</table>
 		</div>
+		
+		<p align='center'>
+			<button class='addQuestionButton'>Add Question</button>
+			<input type='hidden' class='page' value='<?php echo $i; ?>'></input>
+			<input type='hidden' class='newQuestionIndex' value='<?php echo $question['QuestionIndex']; ?>'></input>
+			<?php if ($j < count($page)) {
+				echo '<button>Divide Page Here</button>';
+			} ?>
+		</p>
+	
 		<?php
 		
 		
-	endfor;
+	endfor; // for ($j = 1; $j <= count($page); $j++) :
 ?>
 	</div>
-<?php endfor; ?>
+	
+<p align='center'><button>Add Page</button></p>
+
+<?php endfor; ?>	
 

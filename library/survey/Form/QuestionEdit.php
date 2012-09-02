@@ -75,6 +75,12 @@ abstract class Survey_Form_QuestionEdit extends Zend_Form
 		$cancel->setLabel('Cancel')
 		->setDecorators($this->buttonDecorators)
 		->setOptions(array('onclick' => 'editQuestionDialog.dialog("close");'));
+		
+		$this->hiddenQuestionId = new Zend_Form_Element_Hidden('hiddenQuestionId');
+		$this->hiddenQuestionId->setOptions(array(
+				'class' => 'hidden'))
+				->setDecorators(array(
+						array('ViewHelper')));
 
 
 		$this->addElement($this->question)
@@ -84,7 +90,8 @@ abstract class Survey_Form_QuestionEdit extends Zend_Form
 		$this->addQuestionCategorySpecificElements();
 		
 		$this->addElement($save)
-			->addElement($cancel);
+			->addElement($cancel)
+			->addElement($this->hiddenQuestionId);
 		
 	}
 	
@@ -93,6 +100,7 @@ abstract class Survey_Form_QuestionEdit extends Zend_Form
 	function setQuestionId($questionId) {
 		$this->setAction('owner/question/save/' . $questionId);
 		$this->questionId = $questionId;
+		$this->hiddenQuestionId->setValue($questionId);
 	}
 	
 	function setQuestionDescription($desc) {

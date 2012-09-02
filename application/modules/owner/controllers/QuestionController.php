@@ -219,7 +219,8 @@ class Owner_QuestionController extends Zend_Controller_Action
 				$question = $q->fetchArray();
 		
 				if (count($question) < 1) {
-					$response = "ERROR:database returned no value";
+					echo "ERROR:database returned no value";
+					return;
 				}
 				else {
 					$form;
