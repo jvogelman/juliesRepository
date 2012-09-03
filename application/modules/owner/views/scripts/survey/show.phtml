@@ -6,6 +6,19 @@ require_once 'enums.php';
 
 <script type="text/javascript">
 
+QuestionCategory = {
+	MultipleChoiceOneAnswer : 1,
+	MultipleChoiceMultipleAnswers : 2,
+	CommentEssayBox : 3,
+	DescriptiveText : 4,
+	MatrixOfChoices : 5,
+	MatrixOfChoicesChild : 6
+		
+}
+
+String.prototype.trim = function() {
+    return this.replace(/^\s+|\s+$/g, "");
+};
 
 /*
 	function fitToScreen(dialog) {
@@ -55,10 +68,23 @@ require_once 'enums.php';
 		
 		//editQuestionDialog.dialog('option', 'position', 'center');    
 		 
-		setupMultipleChoiceDialog();
-    	setupEssayBoxDialog();
-    	setupDescriptiveTextDialog();
-    	setupMatrixOfChoicesDialog();
+		var type = parseInt($('#questionType').val());
+		switch(type) {
+		case QuestionCategory.MultipleChoiceOneAnswer:
+		case QuestionCategory.MultipleChoiceMultipleAnswers:
+			setupMultipleChoiceDialog();
+			break;
+		case QuestionCategory.CommentEssayBox:
+	    	setupEssayBoxDialog();
+			break;
+		case QuestionCategory.DescriptiveText:
+	    	setupDescriptiveTextDialog();
+			break;
+		case QuestionCategory.MatrixOfChoices:
+	    	setupMatrixOfChoicesDialog();
+			break;
+		}
+		
 
     	var questionId = $('#hiddenQuestionId').val();
 
@@ -100,18 +126,31 @@ require_once 'enums.php';
     	});
 
     	// validate user input on submit
-    	$(editQuestionDialog).submit( function(e){
+    	$(this).submit( function(e){
         	if ($('#questionType').val() == -1) {
             	alert('Please select a Question type first');
             	e.preventDefault();
+            	return;
         	}
         	if ($('#question').val() == '') {
             	alert('Please enter a description for the Question first');
             	e.preventDefault();
+            	return;
         	}
+
+    		unbindEditQuestionDialog();
+    	});
+
+    	$('#cancel').click( function() {
+    		unbindEditQuestionDialog();
     	});
 	}
 
+	function unbindEditQuestionDialog() {
+		$('#questionType').unbind('change');
+		$(this).unbind('submit');
+	}
+	
 	function setupSelection(element, index){
 		var letterA = 'a';
     	var selectionLetter = String.fromCharCode(letterA.charCodeAt(0) + index - 1);
@@ -174,7 +213,38 @@ require_once 'enums.php';
         		$('#otherFieldSize').removeAttr('disabled');
         	}
     	});
-        	
+
+    	$(this).submit(function(e) {
+			// make sure user has entered at least one selection
+			var selectionEntered = false;
+
+			$('#fieldset-selection .selection').each(function(index) {
+				var selection = $(this).val().trim();
+				if (selection != '') {
+					selectionEntered = true;
+				}
+			});
+			
+			if (!selectionEntered) {
+				alert('Please enter at least one selection');
+				e.preventDefault();
+				return;
+			}
+
+			unbindMultipleChoiceDialog();
+    	});
+
+
+    	$('#cancel').click( function() {
+    		unbindMultipleChoiceDialog();
+    	});
+	}
+
+	function unbindMultipleChoiceDialog() {
+		$('#addSelectionButton').unbind('click');
+		$('.deleteSelectionButton').unbind('click');
+		$('#otherField').unbind('click');
+		$(this).unbind('submit');
 	}
 
 
@@ -228,6 +298,7 @@ require_once 'enums.php';
     		// set the Cancel button to close the dialog
     		$('#updateChoicesCancel').click(function(){
     			$('#updateChoicesUpdate').unbind('click');
+    			$('#updateChoicesCancel').unbind('click');
     			updateChoicesDialog.dialog('close');
     		});  		
     		
@@ -271,6 +342,7 @@ require_once 'enums.php';
 				}
 
 				$('#updateChoicesUpdate').unbind('click');
+    			$('#updateChoicesCancel').unbind('click');
     			updateChoicesDialog.dialog('close');
     		});
     	}
@@ -318,6 +390,19 @@ require_once 'enums.php';
     		});
         	
     	}*/
+
+    	$(this).submit( function(e){
+    		unbindMatrixOfChoicesDialog();
+    	});
+
+    	$('#cancel').click( function() {
+    		unbindMatrixOfChoicesDialog();
+    	});
+	}
+
+	function unbindMatrixOfChoicesDialog() {
+		$('#updateChoicesRow').unbind('click');
+		$('#updateChoicesColumn').unbind('click');
 	}
 
 	function setupNewQuestionDialog() {
