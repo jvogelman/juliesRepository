@@ -86,7 +86,7 @@ require_once 'enums.php';
     	// what if the Question Category changes?
     	$('#questionType').change( function(){
         	$.post('/owner/question/shownewcategory',
-                	{'questionId' : questionId, 'surveyId' : surveyId, 'newCategory' : $('#questionType').val() },
+                	{'questionId' : questionId, 'surveyId' : surveyId, 'newCategory' : $('#questionType').val(), 'description' : $('#question').val() },
                     function (response) {
                 		if (response.substr(0,5) == "ERROR") {
                            	alert("Error: " + response.substr(6));
@@ -319,6 +319,24 @@ require_once 'enums.php';
         	
     	}*/
 	}
+
+	function setupNewQuestionDialog() {
+		$('#cancel').unbind('click');
+    	$('#cancel').click( function() {
+    		var questionId = $('#hiddenQuestionId').val();
+            $.get('/owner/question/delete', 
+	            {'questionId' : questionId},
+	          	//callback function
+	            function (response) {
+	                     
+	               	if (response.substr(0,5) == "ERROR") {
+	                   	alert("Error: " + response.substr(6));
+	                } else  {
+	            		editQuestionDialog.dialog('close');
+	                }
+	            });
+    	});
+	}
     
     $(document).ready(function(){
         
@@ -362,6 +380,7 @@ require_once 'enums.php';
                       	editQuestionDialog.html(response);
                       	
                       	setupEditQuestionDialog(surveyId);   
+                    	setupNewQuestionDialog();
                       }
                   }
               );
@@ -386,7 +405,7 @@ require_once 'enums.php';
 
                         	editQuestionDialog.html(response);
                         	
-                        	setupEditQuestionDialog(surveyId);   
+                        	setupEditQuestionDialog(surveyId);  
                         }
                     }
                 );
@@ -520,6 +539,10 @@ for ($i = 1; $i <= count($this->questions); $i++): // go through the pages
 				<?php 
 					
 					switch ( $question["CategoryID"] ) {
+						case enums_QuestionCategory::Undefined:
+							$questionIndex++;
+							echo "<b><font color='red'>Need to define this question!</font></b>\n";
+							break;
 						case enums_QuestionCategory::MultipleChoiceOneAnswer:	
 							for ($k = 0; $k < count($select); $k++):
 								$s = $select[$k];
@@ -541,11 +564,7 @@ for ($i = 1; $i <= count($this->questions); $i++): // go through the pages
 								echo "<textarea rows='3' cols='70'></textarea>"; }
 							$questionIndex++;
 							break;
-						case enums_QuestionCategory::DescriptiveText:
-							$myFile = "testFile2.txt";
-							$fh = fopen($myFile, 'w');
-							fwrite($fh, html_entity_decode($question["Text"]));
-							
+						case enums_QuestionCategory::DescriptiveText:		
 							echo html_entity_decode($question["Text"]);
 							break;
 						case enums_QuestionCategory::MatrixOfChoices:			

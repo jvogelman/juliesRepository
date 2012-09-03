@@ -16,14 +16,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 			$this->_helper->viewRenderer->setNoRender();
 			$this->_helper->getHelper('layout')->disableLayout();
 			
-			session_start();
-			
-			// get session variable for user id
-			if (!isset($_SESSION["userId"])) {
-				throw new Zend_Controller_Action_Exception("session variable 'userId' not found");
-			}
-			
-			$userId = $_SESSION["userId"];
+			$userId = $this->getUserId();
 			
 			// #### we don't really need surveyId, do we?
 			
@@ -176,8 +169,6 @@ class Owner_QuestionController extends Zend_Controller_Action
 	}
 	
 	public function addAction() {
-
-		
 		
 		try
 		{
@@ -219,16 +210,9 @@ class Owner_QuestionController extends Zend_Controller_Action
 	
 	public function addQuestionToPage($surveyId, $page, $index) {
 		
-		session_start();
-		
-		// get session variable for user id
-		if (!isset($_SESSION["userId"])) {
-			throw new Zend_Controller_Action_Exception("session variable 'userId' not found");
-		}
-		
-		$userId = $_SESSION["userId"];
+		$userId = $this->getUserId();
 	
-		// first update the other indeces in this page
+		// first update the other indices in this page
 		$q = Doctrine_Query::create()
 			->select('q.*, s.OwnerID')
 			->from('Survey_Model_Question q')
@@ -261,15 +245,78 @@ class Owner_QuestionController extends Zend_Controller_Action
 		return $id;
 	}
 	
-	public function deleteQuestionFromPage($surveyId, $page, $index) {
+	public function deleteQuestionFromPage($questionId) {
+		
+		// first verify that this is the right user for this survey question
+		$userId = $this->getUserId();	
+				
+		$q = Doctrine_Query::create()
+			->select('q.*, s.OwnerID')
+			->from('Survey_Model_Question q')
+			->leftJoin('q.Survey_Model_Survey s')
+			->where('s.OwnerID = ' . $userId)
+			->addWhere('q.ID = ' . $questionId);
+		$questions = $q->fetchArray();
+		if (count($questions) < 1) {
+			throw new Zend_Controller_Action_Exception('Deletion failed for some reason');
+		}
+		
+		$surveyId = $questions[0]['SurveyID'];
+		$page = $questions[0]['PageNum'];
+		$index = $questions[0]['QuestionIndex'];
+				
 		// remove this question from database
-	
-		// update the other indeces in this page
-	
+		$q = Doctrine_Query::create()
+			->delete('Survey_Model_Question q')
+			->addWhere('q.ID = ?', $questionId);
+		$q->execute();
+		
+		// update the other indices in this page
+		$q = Doctrine_Query::create()
+			->select('q.*, s.OwnerID')
+			->from('Survey_Model_Question q')
+			->leftJoin('q.Survey_Model_Survey s')
+			->where('q.SurveyID = ' . $surveyId)
+			->addWhere('q.PageNum = ' . $page)
+			->addWhere('s.OwnerID = ' . $userId)
+			->addWhere('q.QuestionIndex > ' . $index);
+		$questions = $q->fetchArray();
+		
+		foreach ($questions as $question) {
+			$q = Doctrine_Query::create()
+				->update('Survey_Model_Question q')
+				->set('q.QuestionIndex' ,'?',  $question['QuestionIndex'] - 1)
+				->where('q.ID = ?', $question['ID']);
+			$q->execute();
+		}
 	}
 	
 	public function deleteAction(){
+		$response = '';
 		
+		try {
+			$this->_helper->viewRenderer->setNoRender();
+			$this->_helper->getHelper('layout')->disableLayout();			
+		
+			// _GET parameter is questionId
+			$validators = array(
+					'questionId' => array('NotEmpty', 'Int')
+			);
+				
+			$filters = array(
+					'questionId' => array('HtmlEntities', 'StripTags', 'StringTrim')
+			);
+				
+			$input = new Zend_Filter_Input($filters, $validators);
+			$input->setData($this->getRequest()->getParams());
+			
+			$this->deleteQuestionFromPage($input->questionId);
+		}
+		catch (Exception $e){
+			$response = "ERROR:page threw exception: " . $e;
+		}
+		
+		echo $response;		
 	}
 	
 	public function shownewcategoryAction() {
@@ -278,27 +325,22 @@ class Owner_QuestionController extends Zend_Controller_Action
 			$this->_helper->viewRenderer->setNoRender();
 			$this->_helper->getHelper('layout')->disableLayout();
 				
-			session_start();
-				
-			// get session variable for user id
-			if (!isset($_SESSION["userId"])) {
-				throw new Zend_Controller_Action_Exception("session variable 'userId' not found");
-			}
-				
-			$userId = $_SESSION["userId"];
+			$userId = $this->getUserId();
 				
 			// #### we don't really need surveyId, do we?
 				
 			$validators = array(
 					'surveyId' => array('NotEmpty', 'Int'),
 					'questionId' => array('NotEmpty', 'Int'),
-					'newCategory' => array('NotEmpty')
+					'newCategory' => array('NotEmpty'),
+					'description' => array()
 			);
 				
 			$filters = array(
 					'surveyId' => array('HtmlEntities', 'StripTags', 'StringTrim'),
 					'questionId' => array('HtmlEntities', 'StripTags', 'StringTrim'),
-					'newCategory' => array()
+					'newCategory' => array(),
+					'description' => array()
 			);
 				
 			$input = new Zend_Filter_Input($filters, $validators);
@@ -328,6 +370,9 @@ class Owner_QuestionController extends Zend_Controller_Action
 					$form;
 					
 					switch ($input->newCategory) {
+						case enums_QuestionCategory::Undefined:
+							$form = new Survey_Form_UndefinedCategoryQuestion;
+							break;
 						case enums_QuestionCategory::MultipleChoiceOneAnswer:
 						case enums_QuestionCategory::MultipleChoiceMultipleAnswers:							
 							$form = new Survey_Form_MultipleChoiceQuestion;
@@ -350,7 +395,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 					$form->setQuestionId($question[0]['ID']);
 					
 					$form->setQuestionType($input->newCategory);
-					$form->setQuestionDescription($question[0]['Text']);
+					$form->setQuestionDescription($input->description);
 					$form->setRequireAnswer($question[0]['RequireAnswer']);
 							
 				}
@@ -372,14 +417,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 	public function saveAction()
 	{
 		
-		session_start();
-		
-		// get session variable for user id
-		if (!isset($_SESSION["userId"])) {
-			throw new Zend_Controller_Action_Exception("session variable 'userId' not found");
-		}
-		
-		$userId = $_SESSION["userId"];
+		$userId = $this->getUserId();
 				
 		
 		// first do the general stuff that applies to all question types
@@ -652,5 +690,16 @@ class Owner_QuestionController extends Zend_Controller_Action
 			
 			}
 		}
+	}
+
+	private function getUserId(){
+		session_start();
+			
+		// get session variable for user id
+		if (!isset($_SESSION["userId"])) {
+			throw new Zend_Controller_Action_Exception("session variable 'userId' not found");
+		}
+			
+		return $_SESSION["userId"];
 	}
 }
