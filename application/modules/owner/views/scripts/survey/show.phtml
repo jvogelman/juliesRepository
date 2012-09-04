@@ -409,17 +409,7 @@ String.prototype.trim = function() {
 		$('#cancel').unbind('click');
     	$('#cancel').click( function() {
     		var questionId = $('#hiddenQuestionId').val();
-            $.get('/owner/question/delete', 
-	            {'questionId' : questionId},
-	          	//callback function
-	            function (response) {
-	                     
-	               	if (response.substr(0,5) == "ERROR") {
-	                   	alert("Error: " + response.substr(6));
-	                } else  {
-	            		editQuestionDialog.dialog('close');
-	                }
-	            });
+    		window.location = '/owner/question/delete/' + questionId;	
     	});
 	}
     
@@ -496,7 +486,13 @@ String.prototype.trim = function() {
                 );
 		});
 
-		
+		$('.questionDeleteButton').click(function() {
+			var sib = $(this).siblings('.questionId')[0];
+			var questionId = $(sib).val();
+			if (confirm('Are you sure you want to delete this question?')) {
+	            window.location = '/owner/question/delete/' + questionId;			
+			}
+		});
    });
 </script>
 
@@ -602,7 +598,10 @@ for ($i = 1; $i <= count($this->questions); $i++): // go through the pages
 			<tr>
 				<td width='80%'>Question Type: <?php echo $question["CategoryName"]; ?><br></td>
 				<td width='20%'>
-					<button class='questionEditButton'>Edit</button><button>Delete</button><button>Move</button><button>Copy</button>
+					<button class='questionEditButton'>Edit</button>
+					<button class='questionDeleteButton'>Delete</button> 
+					<button class='questionMoveButton'>Move</button>
+					<button class='questionCopyButton'>Copy</button>
 					<input type='hidden' class='questionId' value='<?php echo $question["ID"]; ?>' />
 				</td>
 			</tr>

@@ -292,31 +292,23 @@ class Owner_QuestionController extends Zend_Controller_Action
 	}
 	
 	public function deleteAction(){
-		$response = '';
-		
-		try {
-			$this->_helper->viewRenderer->setNoRender();
-			$this->_helper->getHelper('layout')->disableLayout();			
-		
-			// _GET parameter is questionId
-			$validators = array(
-					'questionId' => array('NotEmpty', 'Int')
-			);
 				
-			$filters = array(
-					'questionId' => array('HtmlEntities', 'StripTags', 'StringTrim')
-			);
-				
-			$input = new Zend_Filter_Input($filters, $validators);
-			$input->setData($this->getRequest()->getParams());
+		
+		// _GET parameter is questionId
+		$validators = array(
+				'questionId' => array('NotEmpty', 'Int')
+		);
 			
-			$this->deleteQuestionFromPage($input->questionId);
-		}
-		catch (Exception $e){
-			$response = "ERROR:page threw exception: " . $e;
-		}
+		$filters = array(
+				'questionId' => array('HtmlEntities', 'StripTags', 'StringTrim')
+		);
+			
+		$input = new Zend_Filter_Input($filters, $validators);
+		$input->setData($this->getRequest()->getParams());
 		
-		echo $response;		
+		$this->deleteQuestionFromPage($input->questionId);
+				
+		$this->_redirect('/owner/survey/show');
 	}
 	
 	public function shownewcategoryAction() {
