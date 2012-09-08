@@ -500,14 +500,32 @@ String.prototype.trim = function() {
 
 
 		$('.questionMoveButton').click(function() {
-			var sib = $(this).siblings('.questionId')[0];
+			moveOrCopy(true, this);
+		});
+		
+		$('.questionCopyButton').click(function() {
+			moveOrCopy(false, this);
+		});
+
+		function moveOrCopy(move, buttonClass) {
+			var actionString;
+			var url;
+			if (move) {
+				actionString = 'Move';
+				url = '/owner/question/move/';
+			} else {
+				actionString = 'Copy';
+				url = '/owner/question/copy/';
+			}
+			
+			var sib = $(buttonClass).siblings('.questionId')[0];
 			var questionId = $(sib).val();
 
 			// place a "Move Here" button and a "Cancel Move" button adjacent to each "Add Question" button
 			// ### in the future, should we not put ones directly adjacent to this question? or is it good to put them there
 			// because we know the user will see them there?
 			$('button').attr('disabled', 'true').css({ opacity: 0.5 });
-			$('<button class="moveHere">Move Here</button><button class="cancelMove">Cancel Move</button><input type="hidden" class="hiddenQuestionIdToMove" value="' + questionId + '" />')
+			$('<button class="moveHere">' + actionString + ' Here</button><button class="cancelMove">Cancel ' + actionString + '</button><input type="hidden" class="hiddenQuestionIdToMove" value="' + questionId + '" />')
 				.insertBefore($('.addQuestionButton'));
 
 			$('.cancelMove').click(function() {
@@ -529,19 +547,10 @@ String.prototype.trim = function() {
 				$('.cancelMove').fadeOut('slow');
 				$('.hiddenQuestionIdToMove').remove();
 
-				window.location = '/owner/question/move/' + surveyId.value + '/' + questionId.value + '/' + page.value + '/' + newQuestionIndex.value;
-	            //run ajax
-	            /*$.get('/owner/survey/move', 
-	            	{ 'surveyId' : surveyId, 
-	            	  'questionId' : questionId.value,
-	            	  'page' : page.value,
-	            	  'index' : newQuestionIndex.value },
-	                  //callback function
-	                  function (response) {
-		                  
-	            	  });*/
+				window.location = url + surveyId + '/' + questionId.value + '/' + page.value + '/' + newQuestionIndex.value;
+	            
 			});
-		});
+		}
    });
 </script>
 

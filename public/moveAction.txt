@@ -1,0 +1,7 @@
+conn = <pre>
+Doctrine_Connection object
+State               : active
+Open Transactions   : 1
+Table in memory     : 1
+Driver name         : mysql
+</pre><br>

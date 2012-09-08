@@ -1,6 +1,6 @@
-<form enctype="application/x-www-form-urlencoded" action="owner/question/save/1" method="post">
+<form enctype="application/x-www-form-urlencoded" action="owner/question/save/31" method="post">
 
-<input type="hidden" name="hiddenQuestionId" value="1" class="hidden" id="hiddenQuestionId">
+<input type="hidden" name="hiddenQuestionId" value="31" class="hidden" id="hiddenQuestionId">
 <p><label for="question" class="formLabel required">Question Description:</label>
 
 <textarea name="question" id="question" class="zendFormElement" rows="3" cols="50">Is it blue?</textarea></p>
@@ -15,7 +15,7 @@
     <option value="5" label="Matrix of Choices">Matrix of Choices</option>
 </select></p>
 <p>
-<input type="hidden" name="requireAnswer" value="0"><input type="checkbox" name="requireAnswer" id="requireAnswer" value="1" class="zendFormElement">
+<input type="hidden" name="requireAnswer" value="0"><input type="checkbox" name="requireAnswer" id="requireAnswer" value="1" checked="checked" class="zendFormElement">
 <label for="requireAnswer" class="formLabel optional">Require an answer to this question</label></p>
 <dt id="selection-label">&#160;</dt><dd id="selection-element"><fieldset id="fieldset-selection"><dl>
 <p><label for="selection-1" class="formLabel optional">a.</label>
@@ -23,10 +23,7 @@
 <textarea name="selection[1]" id="selection-1" rows="3" cols="70" class="selection zendFormElement">It is blue</textarea></p>
 <p><label for="selection-2" class="formLabel optional">b.</label>
 
-<textarea name="selection[2]" id="selection-2" rows="3" cols="70" class="selection zendFormElement">It is not blue</textarea></p>
-<p><label for="selection-3" class="formLabel optional">c.</label>
-
-<textarea name="selection[3]" id="selection-3" rows="3" cols="70" class="selection zendFormElement">It might be blue</textarea></p></dl></fieldset></dd>
+<textarea name="selection[2]" id="selection-2" rows="3" cols="70" class="selection zendFormElement">It is notblue</textarea></p></dl></fieldset></dd>
 <dt id="otherFieldGroup-label">&#160;</dt><dd id="otherFieldGroup-element"><fieldset id="fieldset-otherFieldGroup"><dl>
 <p>
 <input type="hidden" name="otherField" value="0"><input type="checkbox" name="otherField" id="otherField" value="1" checked="checked" class="zendFormElement">

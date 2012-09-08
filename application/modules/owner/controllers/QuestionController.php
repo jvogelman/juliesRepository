@@ -258,9 +258,46 @@ class Owner_QuestionController extends Zend_Controller_Action
 		$q->execute();
 		
 		// update the other indices in this page
-		$this->decrementQuestionIndices($surveyId, $userId, $page, $index);
+		$this->decrementQuestionIndices($surveyId, $userId, $page, $index);		
+
+		switch ($questions[0]['CategoryID']) {
+			case enums_QuestionCategory::MultipleChoiceOneAnswer:
+			case enums_QuestionCategory::MultipleChoiceMultipleAnswers:		
+				$q = Doctrine_Query::create()
+					->delete('Survey_Model_Multiplechoicequestion m')
+					->where('m.QuestionID = ?', $questionId);
+				$q->execute();
+				break;
+			case enums_QuestionCategory::CommentEssayBox:	
+				$q = Doctrine_Query::create()
+					->delete('Survey_Model_Essayboxquestion e')
+					->where('e.QuestionID = ?', $questionId);
+				$q->execute();
+				break;
+			case enums_QuestionCategory::DescriptiveText:
+				break;
+			case enums_QuestionCategory::MatrixOfChoices:
+				$q = Doctrine_Query::create()
+					->delete('Survey_Model_Matrixofchoicesquestion m')
+					->where('m.QuestionID = ?', $questionId);
+				$q->execute();
+				
+				// delete child questions
+				$q = Doctrine_Query::create()
+					->delete('Survey_Model_Question q')
+					->addWhere('q.ParentQuestionID = ?', $questionId);
+				$q->execute();
+				break;
+		}
 		
 		$conn->commit();
+	}
+	
+	public function deleteSelections($questionId) {
+		$q = Doctrine_Query::create()
+			->delete('Survey_Model_Selection s')
+			->where('s.QuestionID = ?', $questionId);	
+		$q->execute();
 	}
 	
 	public function deleteAction(){
@@ -275,8 +312,15 @@ class Owner_QuestionController extends Zend_Controller_Action
 			
 		$input = new Zend_Filter_Input($filters, $validators);
 		$input->setData($this->getRequest()->getParams());
+
+		$conn = Doctrine_Manager::connection();
+		$conn->beginTransaction();		
 		
 		$this->deleteQuestionFromPage($input->questionId);
+		$this->deleteSelections($input->questionId);	
+		
+		
+		$conn->commit();
 				
 		$this->_redirect('/owner/survey/show');
 	}
@@ -605,7 +649,6 @@ class Owner_QuestionController extends Zend_Controller_Action
 						$cq->Text = substr($rowChoices, 0, $comma);
 						$cq->SurveyID = $question[0]['SurveyID'];
 						$cq->QuestionIndex = $i++;
-						$cq->PageNum = $question[0]['PageNum'];
 						$cq->CategoryID = enums_QuestionCategory::MatrixOfChoicesChild;
 						$cq->ParentQuestionID = $input->questionId;
 						$cq->RequireAnswer = $input->requireAnswer;
@@ -682,36 +725,176 @@ class Owner_QuestionController extends Zend_Controller_Action
 		$question = $q->fetchArray();
 		$origPage = $question[0]['PageNum'];
 		$origIndex = $question[0]['QuestionIndex'];		
-
-		// use a transaction so that either all or no changes get committed: ### can we verify this actually works?
 		
+
+		// use a transaction so that either all or no changes get committed: 
+		
+		$conn = Doctrine_Manager::connection();
+		$conn->beginTransaction();
+		
+		// in the new page, update the indices for any questions that follow
+		$this->incrementQuestionIndices($input->surveyId, $userId, $input->page, $input->newQuestionIndex);				
+		
+		// update the Question with the new page/index				
+		$q = Doctrine_Query::create()
+			->update('Survey_Model_Question q')
+			->set('q.QuestionIndex' ,'?',  $input->newQuestionIndex)
+			->set('q.PageNum', '?', $input->page)
+			->where('q.ID = ?', $input->questionId);
+		$q->execute();
+				
+		// update the indices in the old page to account for the deleted question
+		$this->decrementQuestionIndices($input->surveyId, $userId, $origPage, $origIndex + 1);
+		
+		$conn->commit();
+		
+		
+		$this->_redirect('/owner/survey/show/' . $input->surveyId);
+	}
+	
+
+	public function copyAction() {
+		$validators = array(
+				'surveyId' => array('NotEmpty', 'Int'),
+				'questionId' => array('NotEmpty', 'Int'),
+				'page' => array('NotEmpty', 'Int'),
+				'newQuestionIndex' => array('NotEmpty', 'Int')
+		);
+			
+		$filters = array(
+				'surveyId' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+				'questionId' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+				'page' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+				'newQuestionIndex' => array('HtmlEntities', 'StripTags', 'StringTrim')
+		);
+			
+		$input = new Zend_Filter_Input($filters, $validators);
+		$input->setData($this->getRequest()->getParams());
+	
+		$userId = $this->getUserId();
+	
+		// get the current page/question index
+		$q = Doctrine_Query::create()
+			->select('q.*')
+			->from('Survey_Model_Question q')
+			->addWhere('q.ID = ' . $input->questionId);
+		$questions = $q->fetchArray();
+		$origQuestion = $questions[0];
+		$origPage = $origQuestion['PageNum'];
+		$origIndex = $origQuestion['QuestionIndex'];
+		
+		if ($origQuestion['QuestionCategory'] == enums_QuestionCategory::MatrixOfChoicesChild) {
+			throw new Zend_Controller_Action_Exception('Cannot copy questions of type "Matrix Of Choices Child"');
+		}
+
 		$conn = Doctrine_Manager::connection();
 		$conn->beginTransaction();
 		
 		// in the new page, update the indices for any questions that follow
 		$this->incrementQuestionIndices($input->surveyId, $userId, $input->page, $input->newQuestionIndex);
 		
+		// make a new question which is a copy of the original
+
+		$newQuestion = new Survey_Model_Question;
+		$newQuestion->Text = $origQuestion['Text'];
+		$newQuestion->SurveyID = $input->surveyId;
+		$newQuestion->QuestionIndex = $input->newQuestionIndex;
+		$newQuestion->PageNum = $input->page;
+		$newQuestion->CategoryID = $origQuestion['CategoryID'];
+		$newQuestion->RequireAnswer = $origQuestion['RequireAnswer'];
+		$newQuestion->save();
+		$newId = $newQuestion['ID'];
 		
-		// update the Question with the new page/index
-		try {		
-			$q = Doctrine_Query::create()
-				->update('Survey_Model_Question q')
-				->set('q.QuestionIndex' ,'?',  $input->newQuestionIndex)
-				->set('q.PageNum', '?', $input->page)
-				->where('q.ID = ?', $input->questionId);
-			$q->execute();
-		} catch (Exception $exc) {
-			// rewind
-			$this->decrementQuestionIndices($input->surveyId, $userId, $input->page, $input->newQuestionIndex);
-			throw $exc;
+		// make copies from question category-specific tables as well
+		switch ($origQuestion['CategoryID']) {
+			case enums_QuestionCategory::CommentEssayBox:
+				$q = Doctrine_Query::create()
+					->select('q.*')
+					->from('Survey_Model_Essayboxquestion q')
+					->addWhere('q.QuestionID = ' . $input->questionId);
+				$questions = $q->fetchArray();
+				if (count($questions) < 1) {
+					throw new Zend_Controller_Action_Exception('Failed to locate question category specific entry in database');
+				}
+				
+				$newQ = new Survey_Model_Essayboxquestion;
+				$newQ->QuestionID = $newId;
+				$newQ->SingleLine = $questions[0]['SingleLine'];
+				$newQ->save();
+				break;
+			case enums_QuestionCategory::DescriptiveText:
+				break;
+			case enums_QuestionCategory::MatrixOfChoices:
+				$q = Doctrine_Query::create()
+					->select('q.*')
+					->from('Survey_Model_Matrixofchoicesquestion q')
+					->addWhere('q.QuestionID = ' . $input->questionId);
+				$questions = $q->fetchArray();
+				if (count($questions) < 1) {
+					throw new Zend_Controller_Action_Exception('Failed to locate question category specific entry in database');
+				}
+				
+				$newQ = new Survey_Model_Matrixofchoicesquestion;
+				$newQ->QuestionID = $newId;
+				$newQ->RandomizeAnswers = $questions[0]['RandomizeAnswers'];
+				$newQ->save();
+				
+				// add corresponding children				
+				$q = Doctrine_Query::create()
+					->select('q.*')
+					->from('Survey_Model_Question q')
+					->addWhere('q.ParentQuestionID = ' . $input->questionId);
+				$childQuestions = $q->fetchArray();
+					
+				foreach ($childQuestions as $cq) {
+					$newQuestion = new Survey_Model_Question;
+					$newQuestion->Text = $cq['Text'];
+					$newQuestion->SurveyID = $input->surveyId;
+					$newQuestion->QuestionIndex = $cq['QuestionIndex'];
+					$newQuestion->CategoryID = enums_QuestionCategory::MatrixOfChoicesChild;
+					$newQuestion->ParentQuestionID = $newId;
+					$newQuestion->save();
+				}
+				
+				break;
+			case enums_QuestionCategory::MultipleChoiceMultipleAnswers:
+			case enums_QuestionCategory::MultipleChoiceOneAnswer:
+
+				$q = Doctrine_Query::create()
+					->select('q.*')
+					->from('Survey_Model_Multiplechoicequestion q')
+					->addWhere('q.QuestionID = ' . $input->questionId);
+				$questions = $q->fetchArray();
+				if (count($questions) < 1) {
+					throw new Zend_Controller_Action_Exception('Failed to locate question category specific entry in database');
+				}
+				
+				$newQ = new Survey_Model_Multiplechoicequestion;
+				$newQ->QuestionID = $newId;
+				$newQ->AddOtherField = $questions[0]['AddOtherField'];
+				$newQ->SingleLine = $questions[0]['SingleLine'];
+				$newQ->save();
+				break;
 		}
 		
 		
-		$this->decrementQuestionIndices($input->surveyId, $userId, $origPage, $origIndex + 1);
 		
+		// make copies from the Selection table as well
+		$q = Doctrine_Query::create()
+			->select('s.*')
+			->from('Survey_Model_Selection s')
+			->where('s.QuestionID = ?', $input->questionId);
+		$selections = $q->fetchArray();
+
+		foreach ($selections as $selection) {
+			$newSelection = new Survey_Model_Selection;
+			$newSelection->QuestionID = $newId;
+			$newSelection->SelectionIndex = $selection['SelectionIndex'];
+			$newSelection->Text = $selection['Text'];
+			$newSelection->save();
+		}
+				
 		$conn->commit();
-		
-		
 		$this->_redirect('/owner/survey/show/' . $input->surveyId);
 	}
 	
