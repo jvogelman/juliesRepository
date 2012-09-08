@@ -119,6 +119,10 @@ String.prototype.trim = function() {
                         } else {
                         	editQuestionDialog.html(response);
 
+                        	unbindEditQuestionDialog();
+                        	unbindMultipleChoiceDialog();
+                        	unbindMatrixOfChoicesDialog();
+
                         	setupEditQuestionDialog(surveyId);
                         }
 	                }
@@ -493,6 +497,51 @@ String.prototype.trim = function() {
 	            window.location = '/owner/question/delete/' + questionId;			
 			}
 		});
+
+
+		$('.questionMoveButton').click(function() {
+			var sib = $(this).siblings('.questionId')[0];
+			var questionId = $(sib).val();
+
+			// place a "Move Here" button and a "Cancel Move" button adjacent to each "Add Question" button
+			// ### in the future, should we not put ones directly adjacent to this question? or is it good to put them there
+			// because we know the user will see them there?
+			$('button').attr('disabled', 'true').css({ opacity: 0.5 });
+			$('<button class="moveHere">Move Here</button><button class="cancelMove">Cancel Move</button><input type="hidden" class="hiddenQuestionIdToMove" value="' + questionId + '" />')
+				.insertBefore($('.addQuestionButton'));
+
+			$('.cancelMove').click(function() {
+				$('button').removeAttr('disabled').css({ opacity: 1 });
+				$('.moveHere').fadeOut('slow');
+				$('.cancelMove').fadeOut('slow');
+				$('.hiddenQuestionIdToMove').remove();
+				
+			});
+
+			$('.moveHere').click(function() {
+	            var surveyId = $('#SurveyId').val();
+	            var questionId = $(this).siblings('.hiddenQuestionIdToMove')[0];
+				var page = $(this).siblings('.page')[0];
+				var newQuestionIndex = $(this).siblings('.newQuestionIndex')[0];
+				
+				$('button').removeAttr('disabled').css({ opacity: 1 });
+				$('.moveHere').fadeOut('slow');
+				$('.cancelMove').fadeOut('slow');
+				$('.hiddenQuestionIdToMove').remove();
+
+				window.location = '/owner/question/move/' + surveyId.value + '/' + questionId.value + '/' + page.value + '/' + newQuestionIndex.value;
+	            //run ajax
+	            /*$.get('/owner/survey/move', 
+	            	{ 'surveyId' : surveyId, 
+	            	  'questionId' : questionId.value,
+	            	  'page' : page.value,
+	            	  'index' : newQuestionIndex.value },
+	                  //callback function
+	                  function (response) {
+		                  
+	            	  });*/
+			});
+		});
    });
 </script>
 
@@ -566,7 +615,7 @@ $rec = $this->record[0];
 	<tr>
 		<td class="descriptionTd">Description:</td>
 		<td class="descriptionTd"><textarea rows="3" cols="70" id="Description"><?php echo $rec["Description"]; ?></textarea></td>
-		<td class="descriptionTd"><input type="button" value="Edit" id="EditDescriptionButton" /></td>
+		<td class="descriptionTd"><button id="EditDescriptionButton">Edit</button></td>
 	</tr>
 </table>
 <br>

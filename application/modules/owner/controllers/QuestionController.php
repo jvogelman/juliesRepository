@@ -213,23 +213,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 		$userId = $this->getUserId();
 	
 		// first update the other indices in this page
-		$q = Doctrine_Query::create()
-			->select('q.*, s.OwnerID')
-			->from('Survey_Model_Question q')
-			->leftJoin('q.Survey_Model_Survey s')
-			->where('q.SurveyID = ' . $surveyId)
-			->addWhere('q.PageNum = ' . $page)
-			->addWhere('s.OwnerID = ' . $userId)
-			->addWhere('q.QuestionIndex >= ' . $index);
-		$questions = $q->fetchArray();
-		
-		foreach ($questions as $question) {
-			$q = Doctrine_Query::create()
-				->update('Survey_Model_Question q')
-				->set('q.QuestionIndex' ,'?',  $question['QuestionIndex'] + 1)
-				->where('q.ID = ?', $question['ID']);
-			$q->execute();
-		}
+		$this->incrementQuestionIndices($surveyId, $userId, $page, $index);
 		
 		// add new question to database
 		$q = new Survey_Model_Question;
@@ -244,7 +228,6 @@ class Owner_QuestionController extends Zend_Controller_Action
 		
 		return $id;
 	}
-	
 	public function deleteQuestionFromPage($questionId) {
 		
 		// first verify that this is the right user for this survey question
@@ -272,29 +255,11 @@ class Owner_QuestionController extends Zend_Controller_Action
 		$q->execute();
 		
 		// update the other indices in this page
-		$q = Doctrine_Query::create()
-			->select('q.*, s.OwnerID')
-			->from('Survey_Model_Question q')
-			->leftJoin('q.Survey_Model_Survey s')
-			->where('q.SurveyID = ' . $surveyId)
-			->addWhere('q.PageNum = ' . $page)
-			->addWhere('s.OwnerID = ' . $userId)
-			->addWhere('q.QuestionIndex > ' . $index);
-		$questions = $q->fetchArray();
-		
-		foreach ($questions as $question) {
-			$q = Doctrine_Query::create()
-				->update('Survey_Model_Question q')
-				->set('q.QuestionIndex' ,'?',  $question['QuestionIndex'] - 1)
-				->where('q.ID = ?', $question['ID']);
-			$q->execute();
-		}
+		$this->decrementQuestionIndices($surveyId, $userId, $page, $index);
 	}
 	
 	public function deleteAction(){
-				
 		
-		// _GET parameter is questionId
 		$validators = array(
 				'questionId' => array('NotEmpty', 'Int')
 		);
@@ -345,13 +310,13 @@ class Owner_QuestionController extends Zend_Controller_Action
 			if ($input->isValid())
 			{
 				$q = Doctrine_Query::create()
-				->select('q.*, c.Name as CategoryName, s.OwnerID')
-				->from('Survey_Model_Question q')
-				->leftJoin('q.Survey_Model_Questioncategory c')
-				->leftJoin('q.Survey_Model_Survey s')
-				->where('q.SurveyID = ' . $input->surveyId)
-				->addWhere('q.ID = ' . $input->questionId)
-				->addWhere('s.OwnerID = ' . $userId);
+					->select('q.*, c.Name as CategoryName, s.OwnerID')
+					->from('Survey_Model_Question q')
+					->leftJoin('q.Survey_Model_Questioncategory c')
+					->leftJoin('q.Survey_Model_Survey s')
+					->where('q.SurveyID = ' . $input->surveyId)
+					->addWhere('q.ID = ' . $input->questionId)
+					->addWhere('s.OwnerID = ' . $userId);
 				$question = $q->fetchArray();
 		
 				if (count($question) < 1) {
@@ -683,6 +648,113 @@ class Owner_QuestionController extends Zend_Controller_Action
 			}
 		}
 	}
+	
+
+
+	public function moveAction() {
+		$validators = array(
+				'surveyId' => array('NotEmpty', 'Int'),
+				'questionId' => array('NotEmpty', 'Int'),
+				'page' => array('NotEmpty', 'Int'),
+				'newQuestionIndex' => array('NotEmpty', 'Int')
+		);
+			
+		$filters = array(
+				'surveyId' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+				'questionId' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+				'page' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+				'newQuestionIndex' => array('HtmlEntities', 'StripTags', 'StringTrim')
+		);
+			
+		$input = new Zend_Filter_Input($filters, $validators);
+		$input->setData($this->getRequest()->getParams());	
+		
+		$userId = $this->getUserId();
+		
+		// get the current page/question index
+		$q = Doctrine_Query::create()
+			->select('q.*')
+			->from('Survey_Model_Question q')
+			->addWhere('q.ID = ' . $input->questionId);
+		$question = $q->fetchArray();
+		$origPage = $question[0]['PageNum'];
+		$origIndex = $question[0]['QuestionIndex'];		
+
+		// #### should this really be in the form of a transaction so we can rewind? do that at some point
+		
+		// in the new page, update the indices for any questions that follow
+		$this->incrementQuestionIndices($input->surveyId, $userId, $input->page, $input->newQuestionIndex);
+		
+		
+		// update the Question with the new page/index
+		try {		
+			$q = Doctrine_Query::create()
+				->update('Survey_Model_Question q')
+				->set('q.QuestionIndex' ,'?',  $input->newQuestionIndex)
+				->set('q.PageNum', '?', $input->page)
+				->where('q.ID = ?', $input->questionId);
+			$q->execute();
+		} catch (Exception $exc) {
+			// rewind
+			$this->decrementQuestionIndices($input->surveyId, $userId, $input->page, $input->newQuestionIndex);
+			throw $exc;
+		}
+		
+		
+		//$temp = 'Decrementing indices from page ' . $origPage . ' starting at index ' . strval($origIndex + 1) .
+		//	', Incrementing indices from page ' . $input->page . ' starting at index ' . strval($input->newQuestionIndex);
+		//throw new Zend_Controller_Action_Exception($temp);
+		
+		$this->decrementQuestionIndices($input->surveyId, $userId, $origPage, $origIndex + 1);
+		
+		$this->_redirect('/owner/survey/show/' . $input->surveyId);
+	}
+	
+
+	private function incrementQuestionIndices($surveyId, $userId, $page, $firstIndex) {
+
+		$q = Doctrine_Query::create()
+		->select('q.*, s.OwnerID')
+		->from('Survey_Model_Question q')
+		->leftJoin('q.Survey_Model_Survey s')
+		->where('q.SurveyID = ' . $surveyId)
+		->addWhere('q.PageNum = ' . $page)
+		->addWhere('s.OwnerID = ' . $userId)
+		->addWhere('q.QuestionIndex >= ' . $firstIndex)
+		->addWhere('q.ParentQuestionID IS NULL');
+		$questions = $q->fetchArray();
+		
+	
+		foreach ($questions as $question) {
+			$q = Doctrine_Query::create()
+				->update('Survey_Model_Question q')
+				->set('q.QuestionIndex' ,'?',  $question['QuestionIndex'] + 1)
+				->where('q.ID = ?', $question['ID']);
+			$q->execute();
+		}
+	}
+	
+	private function decrementQuestionIndices($surveyId, $userId, $page, $firstIndex) {
+		$q = Doctrine_Query::create()
+		->select('q.*, s.OwnerID')
+			->from('Survey_Model_Question q')
+			->leftJoin('q.Survey_Model_Survey s')
+			->where('q.SurveyID = ' . $surveyId)
+			->addWhere('q.PageNum = ' . $page)
+			->addWhere('s.OwnerID = ' . $userId)
+			->addWhere('q.QuestionIndex >= ' . $firstIndex)
+			->addWhere('q.ParentQuestionID IS NULL');
+		$questions = $q->fetchArray();
+	
+		foreach ($questions as $question) {
+			$q = Doctrine_Query::create()
+				->update('Survey_Model_Question q')
+				->set('q.QuestionIndex' ,'?',  $question['QuestionIndex'] - 1)
+				->where('q.ID = ?', $question['ID']);
+			$q->execute();
+		}
+	}
+	
 
 	private function getUserId(){
 		session_start();
