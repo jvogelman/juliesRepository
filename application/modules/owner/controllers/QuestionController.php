@@ -247,6 +247,9 @@ class Owner_QuestionController extends Zend_Controller_Action
 		$surveyId = $questions[0]['SurveyID'];
 		$page = $questions[0]['PageNum'];
 		$index = $questions[0]['QuestionIndex'];
+		
+		$conn = Doctrine_Manager::connection();
+		$conn->beginTransaction();
 				
 		// remove this question from database
 		$q = Doctrine_Query::create()
@@ -256,6 +259,8 @@ class Owner_QuestionController extends Zend_Controller_Action
 		
 		// update the other indices in this page
 		$this->decrementQuestionIndices($surveyId, $userId, $page, $index);
+		
+		$conn->commit();
 	}
 	
 	public function deleteAction(){
@@ -435,6 +440,9 @@ class Owner_QuestionController extends Zend_Controller_Action
 				$requireAnswer = $input->requireAnswer;
 			}
 			
+			$conn = Doctrine_Manager::connection();
+			$conn->beginTransaction();
+			
 			// update the Question in the DB according to form
 			// #### should this be in the form of some transaction? 
 			$q = Doctrine_Query::create()
@@ -518,8 +526,6 @@ class Owner_QuestionController extends Zend_Controller_Action
 						$q->execute();
 					}
 					
-					// show the survey page again
-					$this->_redirect('/owner/survey/show');
 				} else {
 					throw new Zend_Controller_Action_Exception('Input is invalid');
 				}
@@ -549,15 +555,12 @@ class Owner_QuestionController extends Zend_Controller_Action
 							->where('e.QuestionID = ?', $input->questionId);
 						$q->execute();
 					}
-					// show the survey page again
-					$this->_redirect('/owner/survey/show');
 				} else {
 					throw new Zend_Controller_Action_Exception('Input is invalid');
 				}
 				break;
 			case enums_QuestionCategory::DescriptiveText:
-				// nothing left to do, show the survey page again
-				$this->_redirect('/owner/survey/show');
+				// nothing left to do
 				break;
 			case enums_QuestionCategory::MatrixOfChoices:
 
@@ -633,19 +636,19 @@ class Owner_QuestionController extends Zend_Controller_Action
 					
 						$s->save();
 					}
-					
-					
 				} else {
 					
 					throw new Zend_Controller_Action_Exception('Input is invalid: ' . print_r($form->getErrors()));
-				}
+				}				
 				
-				$this->_redirect('/owner/survey/show');
 				break;
 			default:
 				throw new Zend_Controller_Action_Exception('Currently unable to handle questions of type ' . $questionType);
 			
 			}
+			
+			$conn->commit();
+			$this->_redirect('/owner/survey/show');
 		}
 	}
 	
@@ -680,7 +683,10 @@ class Owner_QuestionController extends Zend_Controller_Action
 		$origPage = $question[0]['PageNum'];
 		$origIndex = $question[0]['QuestionIndex'];		
 
-		// #### should this really be in the form of a transaction so we can rewind? do that at some point
+		// use a transaction so that either all or no changes get committed: ### can we verify this actually works?
+		
+		$conn = Doctrine_Manager::connection();
+		$conn->beginTransaction();
 		
 		// in the new page, update the indices for any questions that follow
 		$this->incrementQuestionIndices($input->surveyId, $userId, $input->page, $input->newQuestionIndex);
@@ -701,11 +707,10 @@ class Owner_QuestionController extends Zend_Controller_Action
 		}
 		
 		
-		//$temp = 'Decrementing indices from page ' . $origPage . ' starting at index ' . strval($origIndex + 1) .
-		//	', Incrementing indices from page ' . $input->page . ' starting at index ' . strval($input->newQuestionIndex);
-		//throw new Zend_Controller_Action_Exception($temp);
-		
 		$this->decrementQuestionIndices($input->surveyId, $userId, $origPage, $origIndex + 1);
+		
+		$conn->commit();
+		
 		
 		$this->_redirect('/owner/survey/show/' . $input->surveyId);
 	}
