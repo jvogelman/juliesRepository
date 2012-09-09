@@ -252,6 +252,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 		
 		$input = new Zend_Filter_Input($filters, $validators);
 		$input->setData($this->getRequest()->getParams());
+		
 			
 		verifyUserMatchesSurvey($input->surveyId);
 		
@@ -271,7 +272,6 @@ class Owner_SurveyController extends Zend_Controller_Action
 		// update the page numbers for the other questions in the survey (there is some duplicated work here in incrementing and
 		// decrementing many of the same page numbers), but the cost will generally be low - could be changed however)
 		$this->incrementPageNums($input->surveyId, $input->newPageIndex);
-		$this->decrementPageNums($input->surveyId, $input->currentPageIndex);
 		
 		// update the questions on the page being moved to reflect the new page num
 		foreach ($questions as $question) {
@@ -281,6 +281,8 @@ class Owner_SurveyController extends Zend_Controller_Action
 				->where('q.ID = ?', $question['ID']);
 			$q->execute();
 		}
+		
+		$this->decrementPageNums($input->surveyId, $input->currentPageIndex + 1);
 		
 		
 		$conn->commit();

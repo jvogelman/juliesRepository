@@ -282,13 +282,12 @@ class Owner_QuestionController extends Zend_Controller_Action
 				
 			$userId = getUserId();
 				
-			// #### we don't really need surveyId, do we?
 				
 			$validators = array(
 					'surveyId' => array('NotEmpty', 'Int'),
 					'questionId' => array('NotEmpty', 'Int'),
 					'newCategory' => array('NotEmpty'),
-					'description' => array()
+					'description' => array('allowEmpty' => true)
 			);
 				
 			$filters = array(

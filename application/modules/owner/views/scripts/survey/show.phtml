@@ -111,6 +111,7 @@ String.prototype.trim = function() {
 		
     	// what if the Question Category changes?
     	$('#questionType').change( function(){
+        	var temp = $('#question').val();
         	$.post('/owner/question/shownewcategory',
                 	{'questionId' : questionId, 'surveyId' : surveyId, 'newCategory' : $('#questionType').val(), 'description' : $('#question').val() },
                     function (response) {
@@ -454,7 +455,59 @@ String.prototype.trim = function() {
 			}
 		});
 
-		$('.addQuestionButton').click(function() {
+
+
+		$('.pageMoveButton').click(function() {
+			moveOrCopyPage(true, this);
+		});
+		
+		$('.pageCopyButton').click(function() {
+			moveOrCopyPage(false, this);
+		});
+
+		function moveOrCopyPage(move, buttonClass) {
+			var actionString;
+			var url;
+			if (move) {
+				actionString = 'Move';
+				url = '/owner/survey/movepage/';
+			} else {
+				actionString = 'Copy';
+				url = '/owner/survey/copypage/';
+			}
+			
+			var sib = $(buttonClass).siblings('.page')[0];
+			var page = $(sib).val();
+
+			// place a "Move Here" (or "Copy Here") button and a "Cancel Move" (or "Cancel Copy") button adjacent to each "Add Page" button
+			$('button').attr('disabled', 'true').css({ opacity: 0.5 });
+			$('<button class="moveHere">' + actionString + ' Here</button><button class="cancelMove">Cancel ' + actionString + '</button><input type="hidden" class="hiddenPageToMove" value="' + page + '" />')
+				.insertBefore($('.pageAddButton'));
+
+			$('.cancelMove').click(function() {
+				$('button').removeAttr('disabled').css({ opacity: 1 });
+				$('.moveHere').fadeOut('slow');
+				$('.cancelMove').fadeOut('slow');
+				$('.hiddenPageToMove').remove();
+				
+			});
+
+			$('.moveHere').click(function() {
+	            var surveyId = $('#SurveyId').val();
+	            var page = $(this).siblings('.hiddenPageToMove')[0];
+				var newPageIndex = $(this).siblings('.page')[0];
+				
+				$('button').removeAttr('disabled').css({ opacity: 1 });
+				$('.moveHere').fadeOut('slow');
+				$('.cancelMove').fadeOut('slow');
+				$('.hiddenPageToMove').remove();
+
+				window.location = url + surveyId + '/' + page.value + '/' + newPageIndex.value;
+	            
+			});
+		}
+
+		$('.questionAddButton').click(function() {
             var surveyId = $('#SurveyId').val();
 			var page = $(this).siblings('.page')[0];
 			var newQuestionIndex = $(this).siblings('.newQuestionIndex')[0];
@@ -515,14 +568,14 @@ String.prototype.trim = function() {
 
 
 		$('.questionMoveButton').click(function() {
-			moveOrCopy(true, this);
+			moveOrCopyQuestion(true, this);
 		});
 		
 		$('.questionCopyButton').click(function() {
-			moveOrCopy(false, this);
+			moveOrCopyQuestion(false, this);
 		});
 
-		function moveOrCopy(move, buttonClass) {
+		function moveOrCopyQuestion(move, buttonClass) {
 			var actionString;
 			var url;
 			if (move) {
@@ -536,12 +589,12 @@ String.prototype.trim = function() {
 			var sib = $(buttonClass).siblings('.questionId')[0];
 			var questionId = $(sib).val();
 
-			// place a "Move Here" button and a "Cancel Move" button adjacent to each "Add Question" button
+			// place a "Move Here" (or "Copy Here") button and a "Cancel Move" (or "Cancel Copy") button adjacent to each "Add Question" button
 			// ### in the future, should we not put ones directly adjacent to this question? or is it good to put them there
 			// because we know the user will see them there?
 			$('button').attr('disabled', 'true').css({ opacity: 0.5 });
 			$('<button class="moveHere">' + actionString + ' Here</button><button class="cancelMove">Cancel ' + actionString + '</button><input type="hidden" class="hiddenQuestionIdToMove" value="' + questionId + '" />')
-				.insertBefore($('.addQuestionButton'));
+				.insertBefore($('.questionAddButton'));
 
 			$('.cancelMove').click(function() {
 				$('button').removeAttr('disabled').css({ opacity: 1 });
@@ -655,7 +708,7 @@ for ($i = 1; $i <= $survey['NumPages']; $i++): // go through the pages
 		<button class='pageCopyButton'>Copy</button>
 		<input type='hidden' class='page' value='<?php echo $i; ?>'></input>
 	<p align='center'>
-		<button class='addQuestionButton'>Add Question</button>
+		<button class='questionAddButton'>Add Question</button>
 		<input type='hidden' class='page' value='<?php echo $i; ?>'></input>		
 		<input type='hidden' class='newQuestionIndex' value='1'></input>
 	</p>
@@ -776,7 +829,7 @@ for ($i = 1; $i <= $survey['NumPages']; $i++): // go through the pages
 		</div>
 		
 		<p align='center'>
-			<button class='addQuestionButton'>Add Question</button>
+			<button class='questionAddButton'>Add Question</button>
 			<input type='hidden' class='page' value='<?php echo $i; ?>'></input>
 			<input type='hidden' class='newQuestionIndex' value='<?php echo $question['QuestionIndex'] + 1; ?>'></input>
 			<?php if ($j < count($page)) {
