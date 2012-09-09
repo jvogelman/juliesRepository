@@ -175,12 +175,131 @@ class Owner_SurveyController extends Zend_Controller_Action
 		
 		// push back all the other pages to make room for the new page (i.e. for each page re-numbered, increment page numbers
 		// for the corresponding questions)
-		$q = Doctrine_Query::create()
+		$this->incrementPageNums($input->surveyId, $input->newPageIndex);
+		$this->incrementNumPageNumsInSurvey($input->surveyId);
+		
+		
+		$conn->commit();
+		
+		$this->_redirect('/owner/survey/show/' . $input->surveyId);
+	}
+	
+	public function deletepageAction() {
+		session_start();
+		
+		$validators = array(
+				'surveyId' => array('NotEmpty', 'Int'),
+				'pageIndex' => array('NotEmpty', 'Int')
+		);
+			
+		$filters = array(
+				'surveyId' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+				'pageIndex' => array('HtmlEntities', 'StripTags', 'StringTrim')
+		);
+			
+		
+		$input = new Zend_Filter_Input($filters, $validators);
+		$input->setData($this->getRequest()->getParams());
+			
+		verifyUserMatchesSurvey($input->surveyId);
+		
+		
+		$conn = Doctrine_Manager::connection();
+		$conn->beginTransaction();
+		try {
+		
+			// delete all of the questions on this page
+			$q = Doctrine_Query::create()
 			->select('q.*, s.ID as surveyId')
 			->from('Survey_Model_Question q')
 			->leftJoin('q.Survey_Model_Survey s')
 			->where('s.ID = ' . $input->surveyId)
-			->addWhere('q.PageNum >= ' . $input->newPageIndex);
+			->addWhere('q.PageNum = ' . $input->pageIndex);
+			$questions = $q->fetchArray();
+			
+			foreach ($questions as $question) {
+				deleteQuestionFromPage($question['ID']);
+			}
+			
+			$this->decrementPageNums($input->surveyId, $input->pageIndex);
+			$this->decrementNumPageNumsInSurvey($input->surveyId);		
+			
+			$conn->commit();
+		} catch (Exception $exc) {
+			$conn->rollback();
+			throw exc;
+		}
+		
+		$this->_redirect('/owner/survey/show/' . $input->surveyId);
+	}
+	
+	public function movepageAction() {
+
+		session_start();
+		
+		$validators = array(
+				'surveyId' => array('NotEmpty', 'Int'),
+				'currentPageIndex' => array('NotEmpty', 'Int'),
+				'newPageIndex' => array('NotEmpty', 'Int')
+		);
+			
+		$filters = array(
+				'surveyId' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+				'currentPageIndex' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+				'newPageIndex' => array('HtmlEntities', 'StripTags', 'StringTrim')
+		);
+			
+		
+		$input = new Zend_Filter_Input($filters, $validators);
+		$input->setData($this->getRequest()->getParams());
+			
+		verifyUserMatchesSurvey($input->surveyId);
+		
+		
+		$conn = Doctrine_Manager::connection();
+		$conn->beginTransaction();
+		
+		// store the questions that will be moved from the old page to the new page
+		$q = Doctrine_Query::create()
+			->select('q.*, s.ID as surveyId')
+			->from('Survey_Model_Question q')
+			->leftJoin('q.Survey_Model_Survey s')
+			->where('s.ID = ' . $surveyId)
+			->addWhere('q.PageNum = ' . $input->currentPageIndex);
+		$questions = $q->fetchArray();
+		
+		// update the page numbers for the other questions in the survey (there is some duplicated work here in incrementing and
+		// decrementing many of the same page numbers), but the cost will generally be low - could be changed however)
+		$this->incrementPageNums($input->surveyId, $input->newPageIndex);
+		$this->decrementPageNums($input->surveyId, $input->currentPageIndex);
+		
+		// update the questions on the page being moved to reflect the new page num
+		foreach ($questions as $question) {
+			$q = Doctrine_Query::create()
+				->update('Survey_Model_Question q')
+				->set('q.PageNum', '?', $input->newPageIndex)
+				->where('q.ID = ?', $question['ID']);
+			$q->execute();
+		}
+		
+		
+		$conn->commit();
+		
+		$this->_redirect('/owner/survey/show/' . $input->surveyId);
+	}
+	
+	public function copypageAction() {
+		
+	}
+	
+	// for each page starting with $firstPage, increment the PageNum for all questions on that page
+	private function incrementPageNums($surveyId, $firstPage) {
+		$q = Doctrine_Query::create()
+			->select('q.*, s.ID as surveyId')
+			->from('Survey_Model_Question q')
+			->leftJoin('q.Survey_Model_Survey s')
+			->where('s.ID = ' . $surveyId)
+			->addWhere('q.PageNum >= ' . $firstPage);
 		$questions = $q->fetchArray();
 		
 		foreach ($questions as $question) {
@@ -190,12 +309,34 @@ class Owner_SurveyController extends Zend_Controller_Action
 				->where('q.ID = ?', $question['ID']);
 			$q->execute();
 		}
+	}
+	
+	// for each page starting with $firstPage, decrement the PageNum for all questions on that page
+	private function decrementPageNums($surveyId, $firstPage) {
+
+		$q = Doctrine_Query::create()
+			->select('q.*, s.ID as surveyId')
+			->from('Survey_Model_Question q')
+			->leftJoin('q.Survey_Model_Survey s')
+			->where('s.ID = ' . $surveyId)
+			->addWhere('q.PageNum >= ' . $firstPage);
+		$questions = $q->fetchArray();
 		
+		foreach ($questions as $question) {
+			$q = Doctrine_Query::create()
+				->update('Survey_Model_Question q')
+				->set('q.PageNum', '?', $question['PageNum'] - 1)
+				->where('q.ID = ?', $question['ID']);
+			$q->execute();
+		}
+	}
+	
+	private function incrementNumPageNumsInSurvey($surveyId) {
 		// update the number of pages in the survey
 		$q = Doctrine_Query::create()
 			->select('s.*')
 			->from('Survey_Model_Survey s')
-			->where('s.ID = ' . $input->surveyId);
+			->where('s.ID = ' . $surveyId);
 		$surveys = $q->fetchArray();
 		if (count($surveys) < 1) {
 			throw new Zend_Controller_Action_Exception('No survey found with requested ID');
@@ -204,12 +345,31 @@ class Owner_SurveyController extends Zend_Controller_Action
 		$q = Doctrine_Query::create()
 			->update('Survey_Model_Survey s')
 			->set('s.NumPages', '?', $surveys[0]['NumPages'] + 1)
-			->where('s.ID = ' . $input->surveyId);
+			->where('s.ID = ' . $surveyId);
 		$q->execute();
+	}
+	
+	private function decrementNumPageNumsInSurvey($surveyId) {
+		// update the number of pages in the survey
+		$q = Doctrine_Query::create()
+			->select('s.*')
+			->from('Survey_Model_Survey s')
+			->where('s.ID = ' . $surveyId);
+		$surveys = $q->fetchArray();
+		if (count($surveys) < 1) {
+			throw new Zend_Controller_Action_Exception('No survey found with requested ID');
+		}
 		
-		$conn->commit();
+		// make sure num page nums isn't 0
+		if ($surveys[0]['NumPages'] < 1){
+			throw new Zend_Controller_Action_Exception('Can\'t decrease num pages for this survey. Current pages = 0');
+		}
 		
-		$this->_redirect('/owner/survey/show/' . $input->surveyId);
+		$q = Doctrine_Query::create()
+			->update('Survey_Model_Survey s')
+			->set('s.NumPages', '?', $surveys[0]['NumPages'] - 1)
+			->where('s.ID = ' . $surveyId);
+		$q->execute();
 	}
 	
 }

@@ -439,10 +439,19 @@ String.prototype.trim = function() {
                   
         });
 
-		$('.addPageButton').click(function() {
+		$('.pageAddButton').click(function() {
 			var newPageIndex = $(this).siblings('.page')[0];
             var surveyId = $('#SurveyId').val();
 			window.location = '/owner/survey/addpage/' + surveyId + '/' + newPageIndex.value;
+		});
+
+		$('.pageDeleteButton').click(function() {
+			var pageIndex = $(this).siblings('.page')[0];
+            var surveyId = $('#SurveyId').val();
+
+			if (confirm('Are you sure you want to delete this page and all of the questions in it? This action cannot be undone.')) {
+				window.location = '/owner/survey/deletepage/' + surveyId + '/' + pageIndex.value;
+			}
 		});
 
 		$('.addQuestionButton').click(function() {
@@ -634,13 +643,17 @@ $survey = $this->survey;
 	</tr>
 </table>
 <br>
-<p align='center'><button class='addPageButton'>Add Page</button>
+<p align='center'><button class='pageAddButton'>Add Page</button>
 <input type='hidden' class='page' value='1'></input></p>
 
 <?php 
 for ($i = 1; $i <= $survey['NumPages']; $i++): // go through the pages
 	$page = $this->questions[$i]; ?>
-	<br><div class="PageDiv"><i>Page <?php echo $i; ?></i>
+	<br><div class="PageDiv"><i>Page <?php echo $i; ?>&nbsp;&nbsp;&nbsp;</i>
+		<button class='pageDeleteButton'>Delete</button> 
+		<button class='pageMoveButton'>Move</button>
+		<button class='pageCopyButton'>Copy</button>
+		<input type='hidden' class='page' value='<?php echo $i; ?>'></input>
 	<p align='center'>
 		<button class='addQuestionButton'>Add Question</button>
 		<input type='hidden' class='page' value='<?php echo $i; ?>'></input>		
@@ -778,7 +791,7 @@ for ($i = 1; $i <= $survey['NumPages']; $i++): // go through the pages
 ?>
 	</div>
 	
-<p align='center'><button class='addPageButton'>Add Page</button><input type='hidden' class='page' value='<?php echo ($i + 1); ?>'></p>
+<p align='center'><button class='pageAddButton'>Add Page</button><input type='hidden' class='page' value='<?php echo ($i + 1); ?>'></p>
 
 <?php endfor; ?>	
 
