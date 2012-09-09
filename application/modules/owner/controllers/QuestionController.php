@@ -3,6 +3,7 @@
 require_once 'survey/Form/QuestionCreate.php';
 require_once 'survey/Model/Question.php';
 require_once 'enums.php';
+require_once 'shared.php';
 
 class Owner_QuestionController extends Zend_Controller_Action
 {
@@ -11,14 +12,13 @@ class Owner_QuestionController extends Zend_Controller_Action
 	}
 	
 	public function showeditAction(){
+		session_start();
 		try
 		{
 			$this->_helper->viewRenderer->setNoRender();
 			$this->_helper->getHelper('layout')->disableLayout();
 			
-			$userId = $this->getUserId();
-			
-			// #### we don't really need surveyId, do we?
+			$userId = getUserId();
 			
 			$validators = array(
 					'surveyId' => array('NotEmpty', 'Int'),
@@ -32,16 +32,17 @@ class Owner_QuestionController extends Zend_Controller_Action
 			
 			$input = new Zend_Filter_Input($filters, $validators);
 			$input->setData($this->getRequest()->getParams());
-					
 		
 			$response = "";
 			$form;
 			
 			if ($input->isValid())
 			{
+				verifyUserMatchesQuestion($input->questionId);
+				
 				$q = Doctrine_Query::create()
 					->select('q.*, m.AddOtherField as AddOtherField, m.SingleLine as mSingleLine, e.SingleLine as eSingleLine, 
-							mat.RandomizeAnswers as RandomizeAnswers, c.Name as CategoryName, s.OwnerID')
+							mat.RandomizeAnswers as RandomizeAnswers, c.Name as CategoryName')
 					->from('Survey_Model_Question q')
 					->leftJoin('q.Survey_Model_Questioncategory c')
 					->leftJoin('q.Survey_Model_Survey s')
@@ -49,8 +50,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 					->leftJoin('q.Survey_Model_Essayboxquestion e')
 					->leftJoin('q.Survey_Model_Matrixofchoicesquestion mat')
 					->where('q.SurveyID = ' . $input->surveyId)
-					->addWhere('q.ID = ' . $input->questionId)
-					->addWhere('s.OwnerID = ' . $userId);
+					->addWhere('q.ID = ' . $input->questionId);
 				$question = $q->fetchArray();
 				
 				if (count($question) < 1) {
@@ -169,6 +169,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 	}
 	
 	public function addAction() {
+		session_start();
 		
 		try
 		{
@@ -194,7 +195,9 @@ class Owner_QuestionController extends Zend_Controller_Action
 			
 
 
-			if ($input->isValid())	{			
+			if ($input->isValid())	{		
+				verifyUserMatchesSurvey($input->surveyId);
+				
 				$questionID = $this->addQuestionToPage($input->surveyId, $input->page, $input->index);
 		
 				// redirect to showEditAction
@@ -210,7 +213,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 	
 	public function addQuestionToPage($surveyId, $page, $index) {
 		
-		$userId = $this->getUserId();
+		$userId = getUserId();
 	
 		// first update the other indices in this page
 		$this->incrementQuestionIndices($surveyId, $userId, $page, $index);
@@ -231,7 +234,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 	public function deleteQuestionFromPage($questionId) {
 		
 		// first verify that this is the right user for this survey question
-		$userId = $this->getUserId();	
+		$userId = getUserId();	
 				
 		$q = Doctrine_Query::create()
 			->select('q.*, s.OwnerID')
@@ -301,6 +304,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 	}
 	
 	public function deleteAction(){
+		session_start();
 		
 		$validators = array(
 				'questionId' => array('NotEmpty', 'Int')
@@ -313,6 +317,18 @@ class Owner_QuestionController extends Zend_Controller_Action
 		$input = new Zend_Filter_Input($filters, $validators);
 		$input->setData($this->getRequest()->getParams());
 
+		verifyUserMatchesQuestion($input->questionId);		
+
+
+		// get corresponding survey ID 
+		$q = Doctrine_Query::create()
+			->select('q.*, s.ID as surveyId')
+			->from('Survey_Model_Question q')
+			->leftJoin('q.Survey_Model_Survey s')
+			->addWhere('q.ID = ' . $input->questionId);
+		$questions = $q->fetchArray();
+		$surveyId = $questions[0]['surveyId'];
+		
 		$conn = Doctrine_Manager::connection();
 		$conn->beginTransaction();		
 		
@@ -322,16 +338,17 @@ class Owner_QuestionController extends Zend_Controller_Action
 		
 		$conn->commit();
 				
-		$this->_redirect('/owner/survey/show');
+		$this->_redirect('/owner/survey/show/' . $surveyId);
 	}
 	
 	public function shownewcategoryAction() {
+		session_start();
 		try
 		{
 			$this->_helper->viewRenderer->setNoRender();
 			$this->_helper->getHelper('layout')->disableLayout();
 				
-			$userId = $this->getUserId();
+			$userId = getUserId();
 				
 			// #### we don't really need surveyId, do we?
 				
@@ -358,14 +375,15 @@ class Owner_QuestionController extends Zend_Controller_Action
 				
 			if ($input->isValid())
 			{
+				verifyUserMatchesQuestion($input->questionId);
+				
 				$q = Doctrine_Query::create()
-					->select('q.*, c.Name as CategoryName, s.OwnerID')
+					->select('q.*, c.Name as CategoryName')
 					->from('Survey_Model_Question q')
 					->leftJoin('q.Survey_Model_Questioncategory c')
 					->leftJoin('q.Survey_Model_Survey s')
 					->where('q.SurveyID = ' . $input->surveyId)
-					->addWhere('q.ID = ' . $input->questionId)
-					->addWhere('s.OwnerID = ' . $userId);
+					->addWhere('q.ID = ' . $input->questionId);
 				$question = $q->fetchArray();
 		
 				if (count($question) < 1) {
@@ -422,8 +440,9 @@ class Owner_QuestionController extends Zend_Controller_Action
 	
 	public function saveAction()
 	{
+		session_start();
 		
-		$userId = $this->getUserId();
+		$userId = getUserId();
 				
 		
 		// first do the general stuff that applies to all question types
@@ -456,25 +475,20 @@ class Owner_QuestionController extends Zend_Controller_Action
 		if ($input->isValid())
 		{
 			// verify that this user is authorized to update this survey
+			verifyUserMatchesQuestion($input->questionId);
 			
 			$q = Doctrine_Query::create()
+				->select('q.*, s.ID as surveyId')
 				->from('Survey_Model_Question q')
-				->where('q.ID = ?', $input->questionId);
+				->leftJoin('q.Survey_Model_Survey s')
+				->addWhere('q.ID = ' . $input->questionId);
 			$question = $q->fetchArray();
 			if (sizeof($question) == 0) {
 				throw new Zend_Controller_Action_Exception('No Question matches question ID ' . $input->questionId);
 			}
 			
-			// make sure the user is authorized
-			$surveyId = $question[0]['SurveyID'];
-			$q = Doctrine_Query::create()
-				->from('Survey_Model_Survey s')
-				->where('s.ID = ?', $surveyId)
-				->addWhere('s.OwnerID = ?', $userId);
-			$user = $q->fetchArray();
-			if (sizeof($user) == 0) {
-				throw new Zend_Controller_Action_Exception('User is not associated with this survey');
-			}
+			$surveyId = $question[0]['surveyId'];
+			
 			
 			$questionType = $this->getRequest()->getParam('questionType');
 			$requireAnswer;
@@ -691,13 +705,14 @@ class Owner_QuestionController extends Zend_Controller_Action
 			}
 			
 			$conn->commit();
-			$this->_redirect('/owner/survey/show');
+			$this->_redirect('/owner/survey/show/' . $surveyId);
 		}
 	}
 	
 
 
 	public function moveAction() {
+		session_start();
 		$validators = array(
 				'surveyId' => array('NotEmpty', 'Int'),
 				'questionId' => array('NotEmpty', 'Int'),
@@ -715,7 +730,9 @@ class Owner_QuestionController extends Zend_Controller_Action
 		$input = new Zend_Filter_Input($filters, $validators);
 		$input->setData($this->getRequest()->getParams());	
 		
-		$userId = $this->getUserId();
+		$userId = getUserId();
+		verifyUserMatchesQuestion($input->questionId);
+		
 		
 		// get the current page/question index
 		$q = Doctrine_Query::create()
@@ -754,6 +771,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 	
 
 	public function copyAction() {
+		session_start();
 		$validators = array(
 				'surveyId' => array('NotEmpty', 'Int'),
 				'questionId' => array('NotEmpty', 'Int'),
@@ -771,7 +789,8 @@ class Owner_QuestionController extends Zend_Controller_Action
 		$input = new Zend_Filter_Input($filters, $validators);
 		$input->setData($this->getRequest()->getParams());
 	
-		$userId = $this->getUserId();
+		$userId = getUserId();
+		verifyUserMatchesQuestion($input->questionId);
 	
 		// get the current page/question index
 		$q = Doctrine_Query::create()
@@ -944,14 +963,4 @@ class Owner_QuestionController extends Zend_Controller_Action
 	}
 	
 
-	private function getUserId(){
-		session_start();
-			
-		// get session variable for user id
-		if (!isset($_SESSION["userId"])) {
-			throw new Zend_Controller_Action_Exception("session variable 'userId' not found");
-		}
-			
-		return $_SESSION["userId"];
-	}
 }

@@ -439,6 +439,12 @@ String.prototype.trim = function() {
                   
         });
 
+		$('.addPageButton').click(function() {
+			var newPageIndex = $(this).siblings('.page')[0];
+            var surveyId = $('#SurveyId').val();
+			window.location = '/owner/survey/addpage/' + surveyId + '/' + newPageIndex.value;
+		});
+
 		$('.addQuestionButton').click(function() {
             var surveyId = $('#SurveyId').val();
 			var page = $(this).siblings('.page')[0];
@@ -611,32 +617,33 @@ button {
 </style>
 
 <?php 
-$rec = $this->record[0]; 
+$survey = $this->survey; 
 
 ?>
 
-<input id="SurveyId" type="hidden" value="<?php echo $rec["ID"];?>" />
+<input id="SurveyId" type="hidden" value="<?php echo $survey["ID"];?>" />
 
 
-<h2><?php echo $rec["Name"]; ?></h2>
+<h2><?php echo $survey["Name"]; ?></h2>
 
 <table>
 	<tr>
 		<td class="descriptionTd">Description:</td>
-		<td class="descriptionTd"><textarea rows="3" cols="70" id="Description"><?php echo $rec["Description"]; ?></textarea></td>
+		<td class="descriptionTd"><textarea rows="3" cols="70" id="Description"><?php echo $survey["Description"]; ?></textarea></td>
 		<td class="descriptionTd"><button id="EditDescriptionButton">Edit</button></td>
 	</tr>
 </table>
 <br>
-<p align='center'><button>Add Page</button></p>
+<p align='center'><button class='addPageButton'>Add Page</button>
+<input type='hidden' class='page' value='1'></input></p>
 
 <?php 
-for ($i = 1; $i <= count($this->questions); $i++): // go through the pages
+for ($i = 1; $i <= $survey['NumPages']; $i++): // go through the pages
 	$page = $this->questions[$i]; ?>
 	<br><div class="PageDiv"><i>Page <?php echo $i; ?></i>
 	<p align='center'>
 		<button class='addQuestionButton'>Add Question</button>
-		<input type='hidden' class='page' value='<?php echo $i; ?>'></input>
+		<input type='hidden' class='page' value='<?php echo $i; ?>'></input>		
 		<input type='hidden' class='newQuestionIndex' value='1'></input>
 	</p>
 	<?php 
@@ -771,7 +778,7 @@ for ($i = 1; $i <= count($this->questions); $i++): // go through the pages
 ?>
 	</div>
 	
-<p align='center'><button>Add Page</button></p>
+<p align='center'><button class='addPageButton'>Add Page</button><input type='hidden' class='page' value='<?php echo ($i + 1); ?>'></p>
 
 <?php endfor; ?>	
 
