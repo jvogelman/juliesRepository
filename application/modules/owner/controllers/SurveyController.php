@@ -172,14 +172,19 @@ class Owner_SurveyController extends Zend_Controller_Action
 
 		$conn = Doctrine_Manager::connection();
 		$conn->beginTransaction();
-		
-		// push back all the other pages to make room for the new page (i.e. for each page re-numbered, increment page numbers
-		// for the corresponding questions)
-		$this->incrementPageNums($input->surveyId, $input->newPageIndex);
-		$this->incrementNumPageNumsInSurvey($input->surveyId);
-		
-		
-		$conn->commit();
+		try
+		{
+			// push back all the other pages to make room for the new page (i.e. for each page re-numbered, increment page numbers
+			// for the corresponding questions)
+			$this->incrementPageNums($input->surveyId, $input->newPageIndex);
+			$this->incrementNumPageNumsInSurvey($input->surveyId);
+			
+			
+			$conn->commit();
+		} catch (Exception $exc) {
+			$conn->rollback();
+			throw exc;
+		}
 		
 		$this->_redirect('/owner/survey/show/' . $input->surveyId);
 	}
@@ -259,39 +264,95 @@ class Owner_SurveyController extends Zend_Controller_Action
 		
 		$conn = Doctrine_Manager::connection();
 		$conn->beginTransaction();
-		
-		// store the questions that will be moved from the old page to the new page
-		$q = Doctrine_Query::create()
-			->select('q.*, s.ID as surveyId')
-			->from('Survey_Model_Question q')
-			->leftJoin('q.Survey_Model_Survey s')
-			->where('s.ID = ' . $surveyId)
-			->addWhere('q.PageNum = ' . $input->currentPageIndex);
-		$questions = $q->fetchArray();
-		
-		// update the page numbers for the other questions in the survey (there is some duplicated work here in incrementing and
-		// decrementing many of the same page numbers), but the cost will generally be low - could be changed however)
-		$this->incrementPageNums($input->surveyId, $input->newPageIndex);
-		
-		// update the questions on the page being moved to reflect the new page num
-		foreach ($questions as $question) {
+		try
+		{
+			// store the questions that will be moved from the old page to the new page
 			$q = Doctrine_Query::create()
-				->update('Survey_Model_Question q')
-				->set('q.PageNum', '?', $input->newPageIndex)
-				->where('q.ID = ?', $question['ID']);
-			$q->execute();
+				->select('q.*, s.ID as surveyId')
+				->from('Survey_Model_Question q')
+				->leftJoin('q.Survey_Model_Survey s')
+				->where('s.ID = ' . $surveyId)
+				->addWhere('q.PageNum = ' . $input->currentPageIndex);
+			$questions = $q->fetchArray();
+			
+			// update the page numbers for the other questions in the survey (there is some duplicated work here in incrementing and
+			// decrementing many of the same page numbers), but the cost will generally be low - could be changed however)
+			$this->incrementPageNums($input->surveyId, $input->newPageIndex);
+			
+			// update the questions on the page being moved to reflect the new page num
+			foreach ($questions as $question) {
+				$q = Doctrine_Query::create()
+					->update('Survey_Model_Question q')
+					->set('q.PageNum', '?', $input->newPageIndex)
+					->where('q.ID = ?', $question['ID']);
+				$q->execute();
+			}
+			
+			$this->decrementPageNums($input->surveyId, $input->currentPageIndex + 1);
+			
+			
+			$conn->commit();
+		} catch (Exception $exc) {
+			$conn->rollback();
+			throw exc;
 		}
-		
-		$this->decrementPageNums($input->surveyId, $input->currentPageIndex + 1);
-		
-		
-		$conn->commit();
 		
 		$this->_redirect('/owner/survey/show/' . $input->surveyId);
 	}
 	
 	public function copypageAction() {
+		session_start();
 		
+		$validators = array(
+				'surveyId' => array('NotEmpty', 'Int'),
+				'currentPageIndex' => array('NotEmpty', 'Int'),
+				'newPageIndex' => array('NotEmpty', 'Int')
+		);
+			
+		$filters = array(
+				'surveyId' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+				'currentPageIndex' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+				'newPageIndex' => array('HtmlEntities', 'StripTags', 'StringTrim')
+		);
+			
+		
+		$input = new Zend_Filter_Input($filters, $validators);
+		$input->setData($this->getRequest()->getParams());		
+			
+		verifyUserMatchesSurvey($input->surveyId);
+		
+		
+		$conn = Doctrine_Manager::connection();
+		$conn->beginTransaction();
+		try
+		{
+			$q = Doctrine_Query::create()
+				->select('q.*, s.ID as surveyId')
+				->from('Survey_Model_Question q')
+				->leftJoin('q.Survey_Model_Survey s')
+				->where('s.ID = ' . $input->surveyId)
+				->addWhere('q.PageNum = ' . $input->currentPageIndex)
+				->addWhere('q.CategoryID != ' . enums_QuestionCategory::MatrixOfChoicesChild)
+				->orderBy('q.QuestionIndex');
+			$questions = $q->fetchArray();
+			
+			// push back all the other pages to make room for the new page (i.e. for each page re-numbered, increment page numbers
+			// for the corresponding questions)
+			$this->incrementPageNums($input->surveyId, $input->newPageIndex);
+			$this->incrementNumPageNumsInSurvey($input->surveyId);
+				
+			// for each question on the original page, copy it into the new page at the same index		
+			foreach ($questions as $question) {
+				copyQuestion($input->surveyId, $question['ID'], $input->newPageIndex, $question['QuestionIndex']);				
+			}			
+			
+			$conn->commit();
+		} catch (Exception $exc) {
+			$conn->rollback();
+			throw exc;
+		}
+		
+		$this->_redirect('/owner/survey/show/' . $input->surveyId);
 	}
 	
 	// for each page starting with $firstPage, increment the PageNum for all questions on that page

@@ -730,135 +730,17 @@ class Owner_QuestionController extends Zend_Controller_Action
 		$input->setData($this->getRequest()->getParams());
 	
 		$userId = getUserId();
-		verifyUserMatchesQuestion($input->questionId);
-	
-		// get the current page/question index
-		$q = Doctrine_Query::create()
-			->select('q.*')
-			->from('Survey_Model_Question q')
-			->addWhere('q.ID = ' . $input->questionId);
-		$questions = $q->fetchArray();
-		$origQuestion = $questions[0];
-		$origPage = $origQuestion['PageNum'];
-		$origIndex = $origQuestion['QuestionIndex'];
 		
-		if ($origQuestion['QuestionCategory'] == enums_QuestionCategory::MatrixOfChoicesChild) {
-			throw new Zend_Controller_Action_Exception('Cannot copy questions of type "Matrix Of Choices Child"');
-		}
-
 		$conn = Doctrine_Manager::connection();
 		$conn->beginTransaction();
 		try {
-			// in the new page, update the indices for any questions that follow
-			incrementQuestionIndices($input->surveyId, $userId, $input->page, $input->newQuestionIndex);
-			
-			// make a new question which is a copy of the original
-	
-			$newQuestion = new Survey_Model_Question;
-			$newQuestion->Text = $origQuestion['Text'];
-			$newQuestion->SurveyID = $input->surveyId;
-			$newQuestion->QuestionIndex = $input->newQuestionIndex;
-			$newQuestion->PageNum = $input->page;
-			$newQuestion->CategoryID = $origQuestion['CategoryID'];
-			$newQuestion->RequireAnswer = $origQuestion['RequireAnswer'];
-			$newQuestion->save();
-			$newId = $newQuestion['ID'];
-			
-			// make copies from question category-specific tables as well
-			switch ($origQuestion['CategoryID']) {
-				case enums_QuestionCategory::CommentEssayBox:
-					$q = Doctrine_Query::create()
-						->select('q.*')
-						->from('Survey_Model_Essayboxquestion q')
-						->addWhere('q.QuestionID = ' . $input->questionId);
-					$questions = $q->fetchArray();
-					if (count($questions) < 1) {
-						throw new Zend_Controller_Action_Exception('Failed to locate question category specific entry in database');
-					}
-					
-					$newQ = new Survey_Model_Essayboxquestion;
-					$newQ->QuestionID = $newId;
-					$newQ->SingleLine = $questions[0]['SingleLine'];
-					$newQ->save();
-					break;
-				case enums_QuestionCategory::DescriptiveText:
-					break;
-				case enums_QuestionCategory::MatrixOfChoices:
-					$q = Doctrine_Query::create()
-						->select('q.*')
-						->from('Survey_Model_Matrixofchoicesquestion q')
-						->addWhere('q.QuestionID = ' . $input->questionId);
-					$questions = $q->fetchArray();
-					if (count($questions) < 1) {
-						throw new Zend_Controller_Action_Exception('Failed to locate question category specific entry in database');
-					}
-					
-					$newQ = new Survey_Model_Matrixofchoicesquestion;
-					$newQ->QuestionID = $newId;
-					$newQ->RandomizeAnswers = $questions[0]['RandomizeAnswers'];
-					$newQ->save();
-					
-					// add corresponding children				
-					$q = Doctrine_Query::create()
-						->select('q.*')
-						->from('Survey_Model_Question q')
-						->addWhere('q.ParentQuestionID = ' . $input->questionId);
-					$childQuestions = $q->fetchArray();
-						
-					foreach ($childQuestions as $cq) {
-						$newQuestion = new Survey_Model_Question;
-						$newQuestion->Text = $cq['Text'];
-						$newQuestion->SurveyID = $input->surveyId;
-						$newQuestion->QuestionIndex = $cq['QuestionIndex'];
-						$newQuestion->CategoryID = enums_QuestionCategory::MatrixOfChoicesChild;
-						$newQuestion->ParentQuestionID = $newId;
-						$newQuestion->save();
-					}
-					
-					break;
-				case enums_QuestionCategory::MultipleChoiceMultipleAnswers:
-				case enums_QuestionCategory::MultipleChoiceOneAnswer:
-	
-					$q = Doctrine_Query::create()
-						->select('q.*')
-						->from('Survey_Model_Multiplechoicequestion q')
-						->addWhere('q.QuestionID = ' . $input->questionId);
-					$questions = $q->fetchArray();
-					if (count($questions) < 1) {
-						throw new Zend_Controller_Action_Exception('Failed to locate question category specific entry in database');
-					}
-					
-					$newQ = new Survey_Model_Multiplechoicequestion;
-					$newQ->QuestionID = $newId;
-					$newQ->AddOtherField = $questions[0]['AddOtherField'];
-					$newQ->SingleLine = $questions[0]['SingleLine'];
-					$newQ->save();
-					break;
-			}
-			
-			
-			
-			// make copies from the Selection table as well
-			$q = Doctrine_Query::create()
-				->select('s.*')
-				->from('Survey_Model_Selection s')
-				->where('s.QuestionID = ?', $input->questionId);
-			$selections = $q->fetchArray();
-	
-			foreach ($selections as $selection) {
-				$newSelection = new Survey_Model_Selection;
-				$newSelection->QuestionID = $newId;
-				$newSelection->SelectionIndex = $selection['SelectionIndex'];
-				$newSelection->Text = $selection['Text'];
-				$newSelection->save();
-			}
-					
+			copyQuestion($input->surveyId, $input->questionId, $input->page, $input->newQuestionIndex);
 			$conn->commit();
 		} catch (Exception $exc) {
 			$conn->rollback();
 			throw exc;
 		}
-		
+			
 		$this->_redirect('/owner/survey/show/' . $input->surveyId);
 	}
 	
