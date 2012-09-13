@@ -36,7 +36,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 			// get the record in the survey table for this id
 			$q = Doctrine_Query::create()
 				->from('Survey_Model_Survey s')
-				->addWhere('s.ID = ' . $surveyId);
+				->addWhere('s.ID = ?', $surveyId);
 			$result = $q->fetchArray();
 			if (count($result) < 0) {
 				throw new Zend_Controller_Action_Exception('No survey found with requested ID');
@@ -48,7 +48,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 			$q = Doctrine_Query::create()
       			->select('q.*, c.Name as CategoryName, e.SingleLine as SingleLine')
 				->from('Survey_Model_Question q')
-				->where('q.SurveyID = ' . $surveyId)
+				->where('q.SurveyID = ?', $surveyId)
 				->leftJoin('q.Survey_Model_Questioncategory c')
 				->leftJoin('q.Survey_Model_Essayboxquestion e');
 			$result = $q->fetchArray();
@@ -82,7 +82,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 
 				$q = Doctrine_Query::create()
 					->from('Survey_Model_Selection s')
-					->where('s.QuestionID = ' . $questionId)
+					->where('s.QuestionID = ?', $questionId)
 					->orderBy('s.SelectionIndex');
 				$result = $q->fetchArray();
 				
@@ -218,8 +218,8 @@ class Owner_SurveyController extends Zend_Controller_Action
 			->select('q.*, s.ID as surveyId')
 			->from('Survey_Model_Question q')
 			->leftJoin('q.Survey_Model_Survey s')
-			->where('s.ID = ' . $input->surveyId)
-			->addWhere('q.PageNum = ' . $input->pageIndex);
+			->where('s.ID = ?', $input->surveyId)
+			->addWhere('q.PageNum = ?', $input->pageIndex);
 			$questions = $q->fetchArray();
 			
 			foreach ($questions as $question) {
@@ -271,8 +271,8 @@ class Owner_SurveyController extends Zend_Controller_Action
 				->select('q.*, s.ID as surveyId')
 				->from('Survey_Model_Question q')
 				->leftJoin('q.Survey_Model_Survey s')
-				->where('s.ID = ' . $surveyId)
-				->addWhere('q.PageNum = ' . $input->currentPageIndex);
+				->where('s.ID = ?', $surveyId)
+				->addWhere('q.PageNum = ?', $input->currentPageIndex);
 			$questions = $q->fetchArray();
 			
 			// update the page numbers for the other questions in the survey (there is some duplicated work here in incrementing and
@@ -330,9 +330,9 @@ class Owner_SurveyController extends Zend_Controller_Action
 				->select('q.*, s.ID as surveyId')
 				->from('Survey_Model_Question q')
 				->leftJoin('q.Survey_Model_Survey s')
-				->where('s.ID = ' . $input->surveyId)
-				->addWhere('q.PageNum = ' . $input->currentPageIndex)
-				->addWhere('q.CategoryID != ' . enums_QuestionCategory::MatrixOfChoicesChild)
+				->where('s.ID = ?', $input->surveyId)
+				->addWhere('q.PageNum = ?', $input->currentPageIndex)
+				->addWhere('q.CategoryID != ?', enums_QuestionCategory::MatrixOfChoicesChild)
 				->orderBy('q.QuestionIndex');
 			$questions = $q->fetchArray();
 			
@@ -361,8 +361,8 @@ class Owner_SurveyController extends Zend_Controller_Action
 			->select('q.*, s.ID as surveyId')
 			->from('Survey_Model_Question q')
 			->leftJoin('q.Survey_Model_Survey s')
-			->where('s.ID = ' . $surveyId)
-			->addWhere('q.PageNum >= ' . $firstPage);
+			->where('s.ID = ?', $surveyId)
+			->addWhere('q.PageNum >= ?', $firstPage);
 		$questions = $q->fetchArray();
 		
 		foreach ($questions as $question) {
@@ -381,8 +381,8 @@ class Owner_SurveyController extends Zend_Controller_Action
 			->select('q.*, s.ID as surveyId')
 			->from('Survey_Model_Question q')
 			->leftJoin('q.Survey_Model_Survey s')
-			->where('s.ID = ' . $surveyId)
-			->addWhere('q.PageNum >= ' . $firstPage);
+			->where('s.ID = ?', $surveyId)
+			->addWhere('q.PageNum >= ?', $firstPage);
 		$questions = $q->fetchArray();
 		
 		foreach ($questions as $question) {
@@ -399,7 +399,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 		$q = Doctrine_Query::create()
 			->select('s.*')
 			->from('Survey_Model_Survey s')
-			->where('s.ID = ' . $surveyId);
+			->where('s.ID = ?', $surveyId);
 		$surveys = $q->fetchArray();
 		if (count($surveys) < 1) {
 			throw new Zend_Controller_Action_Exception('No survey found with requested ID');
@@ -408,7 +408,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 		$q = Doctrine_Query::create()
 			->update('Survey_Model_Survey s')
 			->set('s.NumPages', '?', $surveys[0]['NumPages'] + 1)
-			->where('s.ID = ' . $surveyId);
+			->where('s.ID = ?', $surveyId);
 		$q->execute();
 	}
 	
@@ -417,7 +417,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 		$q = Doctrine_Query::create()
 			->select('s.*')
 			->from('Survey_Model_Survey s')
-			->where('s.ID = ' . $surveyId);
+			->where('s.ID = ?', $surveyId);
 		$surveys = $q->fetchArray();
 		if (count($surveys) < 1) {
 			throw new Zend_Controller_Action_Exception('No survey found with requested ID');
@@ -431,7 +431,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 		$q = Doctrine_Query::create()
 			->update('Survey_Model_Survey s')
 			->set('s.NumPages', '?', $surveys[0]['NumPages'] - 1)
-			->where('s.ID = ' . $surveyId);
+			->where('s.ID = ?', $surveyId);
 		$q->execute();
 	}
 	

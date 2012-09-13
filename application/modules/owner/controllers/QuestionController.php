@@ -49,8 +49,8 @@ class Owner_QuestionController extends Zend_Controller_Action
 					->leftJoin('q.Survey_Model_Multiplechoicequestion m')
 					->leftJoin('q.Survey_Model_Essayboxquestion e')
 					->leftJoin('q.Survey_Model_Matrixofchoicesquestion mat')
-					->where('q.SurveyID = ' . $input->surveyId)
-					->addWhere('q.ID = ' . $input->questionId);
+					->where('q.SurveyID = ?', $input->surveyId)
+					->addWhere('q.ID = ?', $input->questionId);
 				$question = $q->fetchArray();
 				
 				if (count($question) < 1) {
@@ -81,7 +81,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 							// get the selections that correspond to this question and add those to the form
 							$s = Doctrine_Query::create()
 								->from('Survey_Model_Selection s')
-								->where('s.QuestionID = ' . $input->questionId);
+								->where('s.QuestionID = ?', $input->questionId);
 							$selections = $s->fetchArray();
 							$formSelections = array();
 							foreach ($selections as $selection) {
@@ -117,7 +117,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 							// input the rows (i.e. the child questions)
 							$q = Doctrine_Query::create()
 								->from('Survey_Model_Question q')
-								->where('q.ParentQuestionID = ' . $input->questionId);
+								->where('q.ParentQuestionID = ?', $input->questionId);
 							$childQuestions = $q->fetchArray();
 							$rows = array();
 		
@@ -130,7 +130,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 							// input the columns (i.e. the selections for this question)
 							$q = Doctrine_Query::create()
 								->from('Survey_Model_Selection s')
-								->where('s.QuestionID = ' . $input->questionId);
+								->where('s.QuestionID = ?', $input->questionId);
 							$selections = $q->fetchArray();
 							$formSelections = array();
 							foreach ($selections as $selection) {
@@ -255,7 +255,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 			->select('q.*, s.ID as surveyId')
 			->from('Survey_Model_Question q')
 			->leftJoin('q.Survey_Model_Survey s')
-			->addWhere('q.ID = ' . $input->questionId);
+			->addWhere('q.ID = ?', $input->questionId);
 		$questions = $q->fetchArray();
 		$surveyId = $questions[0]['surveyId'];
 		
@@ -313,8 +313,8 @@ class Owner_QuestionController extends Zend_Controller_Action
 					->from('Survey_Model_Question q')
 					->leftJoin('q.Survey_Model_Questioncategory c')
 					->leftJoin('q.Survey_Model_Survey s')
-					->where('q.SurveyID = ' . $input->surveyId)
-					->addWhere('q.ID = ' . $input->questionId);
+					->where('q.SurveyID = ?', $input->surveyId)
+					->addWhere('q.ID = ?', $input->questionId);
 				$question = $q->fetchArray();
 		
 				if (count($question) < 1) {
@@ -412,7 +412,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 				->select('q.*, s.ID as surveyId')
 				->from('Survey_Model_Question q')
 				->leftJoin('q.Survey_Model_Survey s')
-				->addWhere('q.ID = ' . $input->questionId);
+				->addWhere('q.ID = ?', $input->questionId);
 			$question = $q->fetchArray();
 			if (sizeof($question) == 0) {
 				throw new Zend_Controller_Action_Exception('No Question matches question ID ' . $input->questionId);

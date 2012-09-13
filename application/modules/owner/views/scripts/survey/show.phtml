@@ -19,29 +19,16 @@ QuestionCategory = {
 String.prototype.trim = function() {
     return this.replace(/^\s+|\s+$/g, "");
 };
-/*
-Function.prototype.inheritsFrom = function( parentClassOrObject ){ 
-	if ( parentClassOrObject.constructor == Function ) 
-	{ 
-		//Normal Inheritance 
-		this.prototype = new parentClassOrObject;
-		this.prototype.constructor = this;
-		this.prototype.parent = parentClassOrObject.prototype;
-	} 
-	else 
-	{ 
-		//Pure Virtual Inheritance 
-		this.prototype = parentClassOrObject;
-		this.prototype.constructor = this;
-		this.prototype.parent = parentClassOrObject;
-	} 
-	return this;
-} */
+
 
 var editQDialog = new EditQDialog();
 
 function EditQDialog() {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// PRIVATE VARIABLES
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		
 	var _dlg = $('<div id="editQuestionDialog"></div>')
 		.html('<p>Edit Question</p>')
 		.dialog({
@@ -61,26 +48,40 @@ function EditQDialog() {
 	        width:'auto'*/
 		});
 
+	var _questionId = -1;
 	var _surveyId = -1;
 	var _type = -1;
+	var _this = this;
 
+	// this is for the MatrixOfChoices edit dialog
+	var _updateChoicesDlg = $('<div id="updateChoicesDialog"></div>')
+		.html('<p>Adjust the choices below (one per line)<br/><textarea id="updateChoicesTextArea" rows="10" cols="25"></textarea>' +
+		'<br/><button id="updateChoicesUpdate">Update</button><button id="updateChoicesCancel">Cancel</button></p>')
+		.dialog({
+			autoOpen: false,
+			title: 'Update Choices',
+			modal: true,
+			width:'auto',
+			height: 'auto'
+		});
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// PRIVATE METHODS
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		
 
 	// what if the Question Category changes?
 	$('#questionType').live('change', function(){
     	var temp = $('#question').val();
     	$.post('/owner/question/shownewcategory',
-            	{'questionId' : questionId, 'surveyId' : surveyId, 'newCategory' : $('#questionType').val(), 'description' : $('#question').val() },
+            	{'questionId' : _questionId, 'surveyId' : _surveyId, 'newCategory' : $('#questionType').val(), 'description' : $('#question').val() },
                 function (response) {
             		if (response.substr(0,5) == "ERROR") {
                        	alert("Error: " + response.substr(6));
                     } else {
-                    	//_dlg.html(response);
 						unbind();
-                    	//unbindEditQuestionDialog();
-                    	//unbindMultipleChoiceDialog();
-                    	//unbindMatrixOfChoicesDialog();
 
-                    	this.setup(_surveyId, response);	// call _dlg.html(response); here
+                    	_this.setup(_surveyId, response);	// call _dlg.html(response); here
                     }
                 }
 		)
@@ -112,11 +113,21 @@ function EditQDialog() {
 	function unbind() {
 		$('#questionType').unbind('change');
 		$(_dlg).unbind('submit');
+		$('#cancel').unbind('click');
 
 		switch (_type) { 
 		case QuestionCategory.MultipleChoiceOneAnswer:
 		case QuestionCategory.MultipleChoiceMultipleAnswers:
 			unbindMultipleChoice();
+			break;
+		case QuestionCategory.CommentEssayBox:
+			unbindEssayBox();
+			break;
+		case QuestionCategory.DescriptiveText:
+			unbindDescriptiveText();
+			break;
+		case QuestionCategory.MatrixOfChoices:
+			unbindMatrixOfChoices();
 			break;
 		}
 	}
@@ -200,13 +211,8 @@ function EditQDialog() {
 				return;
 			}
 
-			//unbindMultipleChoice();
 		});
 
-
-		/*$('#cancel').click( function() {
-			unbindMultipleChoice();
-		});*/
 	}
 
 	function unbindMultipleChoice() {
@@ -216,301 +222,23 @@ function EditQDialog() {
 	}
 
 
-
-	this.setup = function(surveyId, text) {
-
-		_surveyId = surveyId;
-		_dlg.dialog('open');
-		_dlg.html(text);
-		// add callbacks here
-		_type = parseInt($('#questionType').val());
-		switch(_type) {
-		case QuestionCategory.MultipleChoiceOneAnswer:
-		case QuestionCategory.MultipleChoiceMultipleAnswers:
-			setupMultipleChoice();
-			break;
-		case QuestionCategory.CommentEssayBox:
-			setupEssayBox();
-			break;
-		case QuestionCategory.DescriptiveText:
-			setupDescriptiveText();
-			break;
-		case QuestionCategory.MatrixOfChoices:
-			setupMatrixOfChoices();
-			break;
-		}
-		
-
-		var questionId = $('#hiddenQuestionId').val();
-
-		// set css for the elements in the form
-		$('.zendFormElement').css({'font-size': 'medium', 'margin': '1px'});
-		$('button').css({'font-size': 'small'});
-		$('#save').css({'font-size': 'small'});
-
-		// fix the height of the dialog: if the dialog's too big, make sure it doesn't extend too far down
-		var dialogHeight = parseInt($(_dlg).css('height'), 10);
-		if (dialogHeight > window.innerHeight - 50) {
-	    	_dlg.dialog('option', 'height', window.innerHeight - 50);
-		} else {
-			_dlg.dialog('option', 'height', 'auto');
-	    	dialogHeight = parseInt($(_dlg).css('height'), 10);
-	    	if (dialogHeight > window.innerHeight - 50) {
-	    		_dlg.dialog('option', 'height', window.innerHeight - 50);
-	    	}
-		}
-
-
-		_dlg.dialog('option', 'position','top');   
-		
+	function setupEssayBox(){
 	}
-}
-
-
-
-/*
-	function fitToScreen(dialog) {
-		var extra = 40;
-		var dWidth = $(dialog).width();
-		var dHeight = $(dialog).height();
-		if (this.width - extra < dWidth) {
-			$(dialog).css('width', this.width - extra);
-		}
-		if (this.height - extra < dHeight) {
-			$(dialog).css('height', this.height - extra);
-		}
-	}*/
-	
-	var editQuestionDialog = $('<div id="editQuestionDialog"></div>')
-	.html('<p>Edit Question</p>')
-	.dialog({
-		autoOpen: false,
-		//title: 'Edit Question',
-		modal: true,
-		//width:'auto'
-		width: 700,
-		//height: window.innerHeight - 50,
-		height: 'auto'
-
-
-		/// recommended but it doesn't work:
-		/*autoOpen: false,
-        resizable: false,
-        modal: true,
-        width:'auto'*/
-	});
-	
-	// this is for the MatrixOfChoices edit dialog
-	var updateChoicesDialog = $('<div id="updateChoicesDialog"></div>')
-		.html('<p>Adjust the choices below (one per line)<br/><textarea id="updateChoicesTextArea" rows="10" cols="25"></textarea>' +
-		'<br/><button id="updateChoicesUpdate">Update</button><button id="updateChoicesCancel">Cancel</button></p>')
-		.dialog({
-			autoOpen: false,
-			title: 'Update Choices',
-			modal: true,
-			width:'auto',
-			height: 'auto'
-		});
-
-	function setupEditQuestionDialog(surveyId){
-		
-		//editQuestionDialog.dialog('option', 'position', 'center');    
-		 
-		var type = parseInt($('#questionType').val());
-		switch(type) {
-		case QuestionCategory.MultipleChoiceOneAnswer:
-		case QuestionCategory.MultipleChoiceMultipleAnswers:
-			setupMultipleChoiceDialog();
-			break;
-		case QuestionCategory.CommentEssayBox:
-	    	setupEssayBoxDialog();
-			break;
-		case QuestionCategory.DescriptiveText:
-	    	setupDescriptiveTextDialog();
-			break;
-		case QuestionCategory.MatrixOfChoices:
-	    	setupMatrixOfChoicesDialog();
-			break;
-		}
-		
-
-    	var questionId = $('#hiddenQuestionId').val();
-
-    	// set css for the elements in the form
-    	$('.zendFormElement').css({'font-size': 'medium', 'margin': '1px'});
-    	$('button').css({'font-size': 'small'});
-    	$('#save').css({'font-size': 'small'});
-
-    	// fix the height of the dialog: if the dialog's too big, make sure it doesn't extend too far down
-    	var dialogHeight = parseInt($(editQuestionDialog).css('height'), 10);
-    	if (dialogHeight > window.innerHeight - 50) {
-        	editQuestionDialog.dialog('option', 'height', window.innerHeight - 50);
-    	} else {
-        	editQuestionDialog.dialog('option', 'height', 'auto');
-        	dialogHeight = parseInt($(editQuestionDialog).css('height'), 10);
-        	if (dialogHeight > window.innerHeight - 50) {
-            	editQuestionDialog.dialog('option', 'height', window.innerHeight - 50);
-        	}
-    	}
-
-
-    	editQuestionDialog.dialog('option', 'position','top');    
-
-		
-
-    	// validate user input on submit
-    	$(this).submit( function(e){
-        	if ($('#questionType').val() == -1) {
-            	alert('Please select a Question type first');
-            	e.preventDefault();
-            	return;
-        	}
-        	if ($('#question').val() == '') {
-            	alert('Please enter a description for the Question first');
-            	e.preventDefault();
-            	return;
-        	}
-
-    		unbindEditQuestionDialog();
-    	});
-
-    	$('#cancel').click( function() {
-    		unbindEditQuestionDialog();
-    	});
+	function unbindEssayBox(){
 	}
 
-	function unbindEditQuestionDialog() {
-		$('#questionType').unbind('change');
-		$(this).unbind('submit');
+	function setupDescriptiveText(){
 	}
-	
-	function setupSelection(element, index){
-		var letterA = 'a';
-    	var selectionLetter = String.fromCharCode(letterA.charCodeAt(0) + index - 1);
-    	
-		$(element).prev()
-			.attr('for', 'selection-' + index)
-			.html(selectionLetter + '.');
-		$(element)
-			.attr('name', 'selection[' + index + ']')
-			.attr('id', 'selection-' + index);
+	function unbindDescriptiveText(){
 	}
 
-	function setupMultipleChoiceDialog(){
-		$('#fieldset-selection').append('<button id="addSelectionButton">Add</button>');
-
-		$('#fieldset-selection p').append('<button class="deleteSelectionButton">Delete</button>');
-
-		$('button').css({'font-size': 'small'});
-		
-    	$('#addSelectionButton').click(function(event) {
-        	event.preventDefault();
-        	var selectionIndex = $('.selection').size() + 1;
-        	//var letterA = 'a';
-        	//var selectionLetter = String.fromCharCode(letterA.charCodeAt(0) + selectionIndex - 1);
-			
-        	var currentLast = $('.selection:last').closest('p');
-			var newP = currentLast.clone();
-			
-			$(newP).hide();
-			$(newP).fadeIn('slow');
-			currentLast.after(newP);
-			
-			setupSelection('.selection:last', selectionIndex);
-			$('.selection:last').val('');
-    	});
-    	
-    	$('.deleteSelectionButton').live('click', function(event) {
-        	event.preventDefault();
-
-        	// remove all html within and including the <p></p> tags
-			var parent = $(this).parent('p');
-			$(this).parent('p').fadeOut('slow');
-			$(this).parent('p').remove();
-
-			$('#fieldset-selection .selection').each(function(index) {
-				setupSelection(this, index + 1);
-				index++;
-			});
-        	
-    	});
-
-    	if ($('#otherField').attr('checked') != "checked") {
-    		$('#otherFieldSize').attr('disabled', 'disabled');
-    	}
-
-    	$('#otherField').click(function(){
-    		if ($('#otherField').attr('checked') != "checked") {
-        		$('#otherFieldSize').attr('disabled', 'disabled');
-        	} else {
-        		$('#otherFieldSize').removeAttr('disabled');
-        	}
-    	});
-
-    	$(this).submit(function(e) {
-			// make sure user has entered at least one selection
-			var selectionEntered = false;
-
-			$('#fieldset-selection .selection').each(function(index) {
-				var selection = $(this).val().trim();
-				if (selection != '') {
-					selectionEntered = true;
-				}
-			});
-			
-			if (!selectionEntered) {
-				alert('Please enter at least one selection');
-				e.preventDefault();
-				return;
-			}
-
-			unbindMultipleChoiceDialog();
-    	});
-
-
-    	$('#cancel').click( function() {
-    		unbindMultipleChoiceDialog();
-    	});
-	}
-
-	function unbindMultipleChoiceDialog() {
-		$('#addSelectionButton').unbind('click');
-		$('.deleteSelectionButton').unbind('click');
-		$('#otherField').unbind('click');
-		$(this).unbind('submit');
-	}
-
-
-	function setupEssayBoxDialog(){
-	}
-
-	function setupDescriptiveTextDialog(){
-	}
-
-	function setupMatrixOfChoicesDialog(){
+	function setupMatrixOfChoices(){
     	//$('#editRow').css({'font-size': 'small'});
     	$('#updateChoicesRow').css({'font-size': 'small'});
     	//$('#editColumn').css({'font-size': 'small'});
     	$('#updateChoicesColumn').css({'font-size': 'small'});
     	
-    	/*var editChoicesDialog  = $('<div id="editChoicesDialog"></div>')
-		.html('<p>Enter the new text for this choice:<br><input type="text" size="50" id="editChoicesInput"/>' +
-				'<br/><button id="editChoicesCancel">Cancel</button><button id="editChoicesUpdate">Update</button></p>')
-		.dialog({
-			autoOpen: false,
-			title: 'Edit Choice',
-			modal: true,
-			width:'auto',
-			height: 'auto'
-		});
-
-
-    	$('#editRow').click(function() {
-        	editChoices('#rowChoices');
-    	});
-    	$('#editColumn').click(function() {
-        	editChoices('#columnChoices');
-    	});*/
+    	
     	$('#updateChoicesRow').click(function() {
         	updateChoices('#rowChoices', '#hiddenRowChoices');
     	});
@@ -519,7 +247,7 @@ function EditQDialog() {
     	});
 
     	function updateChoices(select, hidden) {
-			updateChoicesDialog.dialog('open');
+			_updateChoicesDlg.dialog('open');
 			$('#updateChoicesTextArea').val('');
 			
 			// enter the current choices in the text area
@@ -532,7 +260,7 @@ function EditQDialog() {
     		$('#updateChoicesCancel').click(function(){
     			$('#updateChoicesUpdate').unbind('click');
     			$('#updateChoicesCancel').unbind('click');
-    			updateChoicesDialog.dialog('close');
+    			_updateChoicesDlg.dialog('close');
     		});  		
     		
     		// if Update button is clicked...
@@ -576,75 +304,95 @@ function EditQDialog() {
 
 				$('#updateChoicesUpdate').unbind('click');
     			$('#updateChoicesCancel').unbind('click');
-    			updateChoicesDialog.dialog('close');
+    			_updateChoicesDlg.dialog('close');
     		});
     	}
-/*
-    	function editChoices(select) {
-        	
-        	editChoicesDialog.dialog('open');
-        	// get the item currently selected
-        	var selected = $(select + ' option:selected').text();	
-
-    		// enter the selected string in the text box
-    		$('#editChoicesInput').val(selected);
-
-    		// set the Cancel button to close the dialog
-    		$('#editChoicesCancel').click(function(){
-        		editChoicesDialog.dialog('close');
-    		});  		
-
-    		// if Update button is clicked...
-    		$('#editChoicesUpdate').click(function(){
-
-        		// build arrays of the current items in the Select box (values and keys), replacing the old selected item with the new one
-        		var optionValues = new Array();
-        		var optionText = new Array();
-        		var index = 0;
-        		$(select + ' option').each(function () {
-        			optionText[index] = this.text;
-        			optionValues[index] = this.value;
-        			if (this.text == selected) {
-        				optionText[index] = $('#editChoicesInput').val();
-        			}
-        			index++;
-        		});
-        		
-        		// empty the Select and add the values from our arrays
-        		$(select).empty();
-        		for (var i = 0; i < index; i++) {
-            		var value = optionValues[i];
-            		var txt = optionText[i];
-        			$(select).append($("<option></option>")
-        		     	.attr("value", value).text(txt));
-        		}
-    			
-        		editChoicesDialog.dialog('close');
-    		});
-        	
-    	}*/
-
-    	$(this).submit( function(e){
-    		unbindMatrixOfChoicesDialog();
-    	});
-
-    	$('#cancel').click( function() {
-    		unbindMatrixOfChoicesDialog();
-    	});
 	}
 
-	function unbindMatrixOfChoicesDialog() {
+	function unbindMatrixOfChoices() {
 		$('#updateChoicesRow').unbind('click');
 		$('#updateChoicesColumn').unbind('click');
 	}
+    
 
-	function setupNewQuestionDialog() {
-		$('#cancel').unbind('click');
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// PRIVILEGED METHODS
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+	this.setup = function(surveyId, text) {
+
+		_surveyId = surveyId;
+		_dlg.dialog('open');
+		_dlg.html(text);
+		// add callbacks here
+		_type = parseInt($('#questionType').val());
+		switch(_type) {
+		case QuestionCategory.MultipleChoiceOneAnswer:
+		case QuestionCategory.MultipleChoiceMultipleAnswers:
+			setupMultipleChoice();
+			break;
+		case QuestionCategory.CommentEssayBox:
+			setupEssayBox();
+			break;
+		case QuestionCategory.DescriptiveText:
+			setupDescriptiveText();
+			break;
+		case QuestionCategory.MatrixOfChoices:
+			setupMatrixOfChoices();
+			break;
+		}
+		
+
+		_questionId = $('#hiddenQuestionId').val();
+
+		// set css for the elements in the form
+		$('.zendFormElement').css({'font-size': 'medium', 'margin': '1px'});
+		$('button').css({'font-size': 'small'});
+		$('#save').css({'font-size': 'small'});
+
+		// fix the height of the dialog: if the dialog's too big, make sure it doesn't extend too far down
+		var dialogHeight = parseInt($(_dlg).css('height'), 10);
+		if (dialogHeight > window.innerHeight - 50) {
+	    	_dlg.dialog('option', 'height', window.innerHeight - 50);
+		} else {
+			_dlg.dialog('option', 'height', 'auto');
+	    	dialogHeight = parseInt($(_dlg).css('height'), 10);
+	    	if (dialogHeight > window.innerHeight - 50) {
+	    		_dlg.dialog('option', 'height', window.innerHeight - 50);
+	    	}
+		}
+
+
+		_dlg.dialog('option', 'position','top');   
+		
+	}
+
+
+
+	this.setupNew = function() {
     	$('#cancel').click( function() {
     		var questionId = $('#hiddenQuestionId').val();
     		window.location = '/owner/question/delete/' + questionId;	
     	});
 	}
+}
+
+
+
+/*
+	function fitToScreen(dialog) {
+		var extra = 40;
+		var dWidth = $(dialog).width();
+		var dHeight = $(dialog).height();
+		if (this.width - extra < dWidth) {
+			$(dialog).css('width', this.width - extra);
+		}
+		if (this.height - extra < dHeight) {
+			$(dialog).css('height', this.height - extra);
+		}
+	}*/
+	
     
     $(document).ready(function(){
         
