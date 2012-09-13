@@ -25,7 +25,8 @@ class Survey_Form_SurveyCreate extends Zend_Form
 		$surveyName = new Zend_Form_Element_Text('Name');
 		$surveyName->setLabel('Survey Name:')
 			->setOptions(array(
-					'id' => 'Name'))
+					'id' => 'Name',
+					'size' => '100px'))
 			->setRequired(true)
 			->addFilter('HtmlEntities');
 			//->setDecorators($this->elementDecorators);

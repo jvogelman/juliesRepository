@@ -19,6 +19,254 @@ QuestionCategory = {
 String.prototype.trim = function() {
     return this.replace(/^\s+|\s+$/g, "");
 };
+/*
+Function.prototype.inheritsFrom = function( parentClassOrObject ){ 
+	if ( parentClassOrObject.constructor == Function ) 
+	{ 
+		//Normal Inheritance 
+		this.prototype = new parentClassOrObject;
+		this.prototype.constructor = this;
+		this.prototype.parent = parentClassOrObject.prototype;
+	} 
+	else 
+	{ 
+		//Pure Virtual Inheritance 
+		this.prototype = parentClassOrObject;
+		this.prototype.constructor = this;
+		this.prototype.parent = parentClassOrObject;
+	} 
+	return this;
+} */
+
+var editQDialog = new EditQDialog();
+
+function EditQDialog() {
+
+	var _dlg = $('<div id="editQuestionDialog"></div>')
+		.html('<p>Edit Question</p>')
+		.dialog({
+			autoOpen: false,
+			//title: 'Edit Question',
+			modal: true,
+			//width:'auto'
+			width: 700,
+			//height: window.innerHeight - 50,
+			height: 'auto'
+	
+	
+			/// recommended but it doesn't work:
+			/*autoOpen: false,
+	        resizable: false,
+	        modal: true,
+	        width:'auto'*/
+		});
+
+	var _surveyId = -1;
+	var _type = -1;
+
+
+	// what if the Question Category changes?
+	$('#questionType').live('change', function(){
+    	var temp = $('#question').val();
+    	$.post('/owner/question/shownewcategory',
+            	{'questionId' : questionId, 'surveyId' : surveyId, 'newCategory' : $('#questionType').val(), 'description' : $('#question').val() },
+                function (response) {
+            		if (response.substr(0,5) == "ERROR") {
+                       	alert("Error: " + response.substr(6));
+                    } else {
+                    	//_dlg.html(response);
+						unbind();
+                    	//unbindEditQuestionDialog();
+                    	//unbindMultipleChoiceDialog();
+                    	//unbindMatrixOfChoicesDialog();
+
+                    	this.setup(_surveyId, response);	// call _dlg.html(response); here
+                    }
+                }
+		)
+	});
+
+
+	// validate user input on submit
+	$(_dlg).live('submit',  function(e){
+    	if ($('#questionType').val() == -1) {
+        	alert('Please select a Question type first');
+        	e.preventDefault();
+        	return;
+    	}
+    	if ($('#question').val() == '') {
+        	alert('Please enter a description for the Question first');
+        	e.preventDefault();
+        	return;
+    	}
+
+    	unbind();
+	});
+
+	$('#cancel').live('click', function() {
+		unbind();
+		_dlg.dialog('close');
+	});
+
+
+	function unbind() {
+		$('#questionType').unbind('change');
+		$(_dlg).unbind('submit');
+
+		switch (_type) { 
+		case QuestionCategory.MultipleChoiceOneAnswer:
+		case QuestionCategory.MultipleChoiceMultipleAnswers:
+			unbindMultipleChoice();
+			break;
+		}
+	}
+		
+
+	function setupSelection(element, index){
+		var letterA = 'a';
+		var selectionLetter = String.fromCharCode(letterA.charCodeAt(0) + index - 1);
+		
+		$(element).prev()
+			.attr('for', 'selection-' + index)
+			.html(selectionLetter + '.');
+		$(element)
+			.attr('name', 'selection[' + index + ']')
+			.attr('id', 'selection-' + index);
+	}
+
+	function setupMultipleChoice(){
+		$('#fieldset-selection').append('<button id="addSelectionButton">Add</button>');
+
+		$('#fieldset-selection p').append('<button class="deleteSelectionButton">Delete</button>');
+
+		$('button').css({'font-size': 'small'});
+		
+		$('#addSelectionButton').click(function(event) {
+	    	event.preventDefault();
+	    	var selectionIndex = $('.selection').size() + 1;
+			
+	    	var currentLast = $('.selection:last').closest('p');
+			var newP = currentLast.clone();
+			
+			$(newP).hide();
+			$(newP).fadeIn('slow');
+			currentLast.after(newP);
+			
+			setupSelection('.selection:last', selectionIndex);
+			$('.selection:last').val('');
+		});
+		
+		$('.deleteSelectionButton').live('click', function(event) {
+	    	event.preventDefault();
+
+	    	// remove all html within and including the <p></p> tags
+			var parent = $(this).parent('p');
+			$(this).parent('p').fadeOut('slow');
+			$(this).parent('p').remove();
+
+			$('#fieldset-selection .selection').each(function(index) {
+				setupSelection(this, index + 1);
+				index++;
+			});
+	    	
+		});
+
+		if ($('#otherField').attr('checked') != "checked") {
+			$('#otherFieldSize').attr('disabled', 'disabled');
+		}
+
+		$('#otherField').click(function(){
+			if ($('#otherField').attr('checked') != "checked") {
+	    		$('#otherFieldSize').attr('disabled', 'disabled');
+	    	} else {
+	    		$('#otherFieldSize').removeAttr('disabled');
+	    	}
+		});
+
+		$(_dlg).submit(function(e) {
+			// make sure user has entered at least one selection
+			var selectionEntered = false;
+
+			$('#fieldset-selection .selection').each(function(index) {
+				var selection = $(this).val().trim();
+				if (selection != '') {
+					selectionEntered = true;
+				}
+			});
+			
+			if (!selectionEntered) {
+				alert('Please enter at least one selection');
+				e.preventDefault();
+				return;
+			}
+
+			//unbindMultipleChoice();
+		});
+
+
+		/*$('#cancel').click( function() {
+			unbindMultipleChoice();
+		});*/
+	}
+
+	function unbindMultipleChoice() {
+		$('#addSelectionButton').unbind('click');
+		$('.deleteSelectionButton').unbind('click');
+		$('#otherField').unbind('click');
+	}
+
+
+
+	this.setup = function(surveyId, text) {
+
+		_surveyId = surveyId;
+		_dlg.dialog('open');
+		_dlg.html(text);
+		// add callbacks here
+		_type = parseInt($('#questionType').val());
+		switch(_type) {
+		case QuestionCategory.MultipleChoiceOneAnswer:
+		case QuestionCategory.MultipleChoiceMultipleAnswers:
+			setupMultipleChoice();
+			break;
+		case QuestionCategory.CommentEssayBox:
+			setupEssayBox();
+			break;
+		case QuestionCategory.DescriptiveText:
+			setupDescriptiveText();
+			break;
+		case QuestionCategory.MatrixOfChoices:
+			setupMatrixOfChoices();
+			break;
+		}
+		
+
+		var questionId = $('#hiddenQuestionId').val();
+
+		// set css for the elements in the form
+		$('.zendFormElement').css({'font-size': 'medium', 'margin': '1px'});
+		$('button').css({'font-size': 'small'});
+		$('#save').css({'font-size': 'small'});
+
+		// fix the height of the dialog: if the dialog's too big, make sure it doesn't extend too far down
+		var dialogHeight = parseInt($(_dlg).css('height'), 10);
+		if (dialogHeight > window.innerHeight - 50) {
+	    	_dlg.dialog('option', 'height', window.innerHeight - 50);
+		} else {
+			_dlg.dialog('option', 'height', 'auto');
+	    	dialogHeight = parseInt($(_dlg).css('height'), 10);
+	    	if (dialogHeight > window.innerHeight - 50) {
+	    		_dlg.dialog('option', 'height', window.innerHeight - 50);
+	    	}
+		}
+
+
+		_dlg.dialog('option', 'position','top');   
+		
+	}
+}
+
+
 
 /*
 	function fitToScreen(dialog) {
@@ -109,26 +357,6 @@ String.prototype.trim = function() {
     	editQuestionDialog.dialog('option', 'position','top');    
 
 		
-    	// what if the Question Category changes?
-    	$('#questionType').change( function(){
-        	var temp = $('#question').val();
-        	$.post('/owner/question/shownewcategory',
-                	{'questionId' : questionId, 'surveyId' : surveyId, 'newCategory' : $('#questionType').val(), 'description' : $('#question').val() },
-                    function (response) {
-                		if (response.substr(0,5) == "ERROR") {
-                           	alert("Error: " + response.substr(6));
-                        } else {
-                        	editQuestionDialog.html(response);
-
-                        	unbindEditQuestionDialog();
-                        	unbindMultipleChoiceDialog();
-                        	unbindMatrixOfChoicesDialog();
-
-                        	setupEditQuestionDialog(surveyId);
-                        }
-	                }
-    		)
-    	});
 
     	// validate user input on submit
     	$(this).submit( function(e){
@@ -548,11 +776,12 @@ String.prototype.trim = function() {
                        	if (response.substr(0,5) == "ERROR") {
                            	alert("Error: " + response.substr(6));
                         } else {
-							editQuestionDialog.dialog('open');		
+							/*editQuestionDialog.dialog('open');		
 
                         	editQuestionDialog.html(response);
                         	
-                        	setupEditQuestionDialog(surveyId);  
+                        	setupEditQuestionDialog(surveyId);  */
+                        	editQDialog.setup(surveyId, response);
                         }
                     }
                 );

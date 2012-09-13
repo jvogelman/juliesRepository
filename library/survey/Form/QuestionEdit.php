@@ -74,8 +74,8 @@ abstract class Survey_Form_QuestionEdit extends Zend_Form
 
 		$cancel = new Zend_Form_Element_Button('cancel');
 		$cancel->setLabel('Cancel')
-		->setDecorators($this->buttonDecorators)
-		->setOptions(array('onclick' => 'editQuestionDialog.dialog("close");'));
+		->setDecorators($this->buttonDecorators);
+		//->setOptions(array('onclick' => 'editQuestionDialog.dialog("close");'));
 		
 		$this->hiddenQuestionId = new Zend_Form_Element_Hidden('hiddenQuestionId');
 		$this->hiddenQuestionId->setOptions(array(
