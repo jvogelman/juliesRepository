@@ -298,34 +298,17 @@ class Owner_SurveyController extends Zend_Controller_Action
 		try
 		{
 			// get Page ID for currentPageIndex
-			$currentPageId = getPageAtIndex($input->surveyId, $input->currentPageIndex);
+			$pageId = getPageAtIndex($input->surveyId, $input->currentPageIndex);
 			
 			// incrementPageNums should reset page nums for other Page IDs
-			
-			// set to new index
-			
-			
-			// store the questions that will be moved from the old page to the new page
-			$q = Doctrine_Query::create()
-				->select('q.*, s.ID as surveyId')
-				->from('Survey_Model_Question q')
-				->leftJoin('q.Survey_Model_Survey s')
-				->where('s.ID = ?', $surveyId)
-				->addWhere('q.PageNum = ?', $input->currentPageIndex);
-			$questions = $q->fetchArray();
-			
-			// update the page numbers for the other questions in the survey (there is some duplicated work here in incrementing and
-			// decrementing many of the same page numbers), but the cost will generally be low - could be changed however)
 			$this->incrementPageNums($input->surveyId, $input->newPageIndex);
 			
-			// update the questions on the page being moved to reflect the new page num
-			foreach ($questions as $question) {
-				$q = Doctrine_Query::create()
-					->update('Survey_Model_Question q')
-					->set('q.PageNum', '?', $input->newPageIndex)
-					->where('q.ID = ?', $question['ID']);
-				$q->execute();
-			}
+			// set to new index
+			$q = Doctrine_Query::create()
+				->update('Survey_Model_Page p')
+				->set('p.PageNum', '?', $input->newPageIndex)
+				->where('p.ID = ?', $pageId);
+			$q->execute();
 			
 			$this->decrementPageNums($input->surveyId, $input->currentPageIndex + 1);
 			
@@ -366,27 +349,43 @@ class Owner_SurveyController extends Zend_Controller_Action
 		try
 		{
 			// get page ID for currentPageIndex
+			$pageId = getPageAtIndex($input->surveyId, $input->currentPageIndex);
 			
+			// get the questions on the original page so they can be copied later
 			$q = Doctrine_Query::create()
 				->select('q.*, s.ID as surveyId')
 				->from('Survey_Model_Question q')
 				->leftJoin('q.Survey_Model_Survey s')
 				->where('s.ID = ?', $input->surveyId)
-				->addWhere('q.PageNum = ?', $input->currentPageIndex)
+				->addWhere('q.PageID = ?', $pageId)
 				->addWhere('q.CategoryID != ?', enums_QuestionCategory::MatrixOfChoicesChild)
 				->orderBy('q.QuestionIndex');
 			$questions = $q->fetchArray();
 			
-			// push back all the other pages to make room for the new page (i.e. for each page re-numbered, increment page numbers
-			// for the corresponding questions)
+			// push back all the other pages to make room for the new page 
 			$this->incrementPageNums($input->surveyId, $input->newPageIndex);
 			$this->incrementNumPageNumsInSurvey($input->surveyId);
 			
+			// get the original page information
+			$q = Doctrine_Query::create()
+				->select('p.Name')
+				->from('Survey_Model_Page p')
+				->where('p.SurveyID = ?', $input->surveyId)
+				->addWhere('p.ID = ?', $pageId);
+			$pages = $q->fetchArray();
+			
 			// create a new Page entry
+			$page = new Survey_Model_Page;
+			$page->PageNum = $input->newPageIndex;
+			$page->SurveyID = $input->surveyId;
+			$page->Name = $pages[0]['Name'];
+			$page->save();
+			$newPageId = $page->ID;
+			
 				
 			// for each question on the original page, copy it into the new page at the same index		
 			foreach ($questions as $question) {
-				copyQuestion($input->surveyId, $question['ID'], $input->newPageIndex, $question['QuestionIndex']);				
+				copyQuestion($input->surveyId, $question['ID'], $newPageId, $question['QuestionIndex']);				
 			}			
 			
 			$conn->commit();
