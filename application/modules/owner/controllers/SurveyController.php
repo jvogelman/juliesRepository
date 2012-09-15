@@ -46,9 +46,10 @@ class Owner_SurveyController extends Zend_Controller_Action
 			
 			// get the questions for this survey
 			$q = Doctrine_Query::create()
-      			->select('q.*, c.Name as CategoryName, e.SingleLine as SingleLine')
+      			->select('q.*, p.PageNum as PageNum, c.Name as CategoryName, e.SingleLine as SingleLine')
 				->from('Survey_Model_Question q')
 				->where('q.SurveyID = ?', $surveyId)
+				->leftJoin('q.Survey_Model_Page p')
 				->leftJoin('q.Survey_Model_Questioncategory c')
 				->leftJoin('q.Survey_Model_Essayboxquestion e');
 			$result = $q->fetchArray();
@@ -88,10 +89,24 @@ class Owner_SurveyController extends Zend_Controller_Action
 				
 				$selections[$questionId] = $result;
 			}			
+			
+			// build an array of pages to get any page names
+			$q = Doctrine_Query::create()
+				->select('p.*')
+				->from('Survey_Model_Page p')
+				->where('p.SurveyID = ?', $surveyId);
+			$p = $q->fetchArray();
+			
+			$pages = array();
+
+			foreach ($p as $page) {
+				$pages[$page['PageNum']] = $page['Name'];
+			}
 
 			$this->view->questions = $quest;
 			$this->view->selections = $selections;
 			$this->view->childQuestions = $childQuestions;
+			$this->view->pages = $pages;
 		}
 		
 	}
@@ -174,16 +189,19 @@ class Owner_SurveyController extends Zend_Controller_Action
 		$conn->beginTransaction();
 		try
 		{
-			// push back all the other pages to make room for the new page (i.e. for each page re-numbered, increment page numbers
-			// for the corresponding questions)
+			// push back all the other pages to make room for the new page 
 			$this->incrementPageNums($input->surveyId, $input->newPageIndex);
 			$this->incrementNumPageNumsInSurvey($input->surveyId);
 			
+			$page = new Survey_Model_Page;
+			$page->PageNum = $input->newPageIndex;
+			$page->SurveyID = $input->surveyId;
+			$page->save();
 			
 			$conn->commit();
 		} catch (Exception $exc) {
 			$conn->rollback();
-			throw exc;
+			throw $exc;
 		}
 		
 		$this->_redirect('/owner/survey/show/' . $input->surveyId);
@@ -212,6 +230,20 @@ class Owner_SurveyController extends Zend_Controller_Action
 		$conn = Doctrine_Manager::connection();
 		$conn->beginTransaction();
 		try {
+			
+			// get page ID corresponding to page index
+			$pageId = getPageAtIndex($input->surveyId, $input->pageIndex);
+			
+			// delete entry from Page
+			$q = Doctrine_Query::create()
+				->delete('Survey_Model_Page p')
+				->addWhere('p.ID = ?', $pageId);
+			$q->execute();
+			
+			// decrement PageNum in other entries of Page table
+			$this->decrementPageNums($input->surveyId, $input->pageIndex);
+			// reduce number of pages in survey
+			$this->decrementNumPageNumsInSurvey($input->surveyId);	
 		
 			// delete all of the questions on this page
 			$q = Doctrine_Query::create()
@@ -219,20 +251,19 @@ class Owner_SurveyController extends Zend_Controller_Action
 			->from('Survey_Model_Question q')
 			->leftJoin('q.Survey_Model_Survey s')
 			->where('s.ID = ?', $input->surveyId)
-			->addWhere('q.PageNum = ?', $input->pageIndex);
+			->addWhere('q.PageID = ?', $pageId);
 			$questions = $q->fetchArray();
 			
 			foreach ($questions as $question) {
+				//throw new Zend_Controller_Action_Exception('question ID = ' . $question['ID']);
 				deleteQuestionFromPage($question['ID']);
 			}
-			
-			$this->decrementPageNums($input->surveyId, $input->pageIndex);
-			$this->decrementNumPageNumsInSurvey($input->surveyId);		
+				
 			
 			$conn->commit();
 		} catch (Exception $exc) {
 			$conn->rollback();
-			throw exc;
+			throw $exc;
 		}
 		
 		$this->_redirect('/owner/survey/show/' . $input->surveyId);
@@ -266,6 +297,14 @@ class Owner_SurveyController extends Zend_Controller_Action
 		$conn->beginTransaction();
 		try
 		{
+			// get Page ID for currentPageIndex
+			$currentPageId = getPageAtIndex($input->surveyId, $input->currentPageIndex);
+			
+			// incrementPageNums should reset page nums for other Page IDs
+			
+			// set to new index
+			
+			
 			// store the questions that will be moved from the old page to the new page
 			$q = Doctrine_Query::create()
 				->select('q.*, s.ID as surveyId')
@@ -294,7 +333,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 			$conn->commit();
 		} catch (Exception $exc) {
 			$conn->rollback();
-			throw exc;
+			throw $exc;
 		}
 		
 		$this->_redirect('/owner/survey/show/' . $input->surveyId);
@@ -326,6 +365,8 @@ class Owner_SurveyController extends Zend_Controller_Action
 		$conn->beginTransaction();
 		try
 		{
+			// get page ID for currentPageIndex
+			
 			$q = Doctrine_Query::create()
 				->select('q.*, s.ID as surveyId')
 				->from('Survey_Model_Question q')
@@ -340,6 +381,8 @@ class Owner_SurveyController extends Zend_Controller_Action
 			// for the corresponding questions)
 			$this->incrementPageNums($input->surveyId, $input->newPageIndex);
 			$this->incrementNumPageNumsInSurvey($input->surveyId);
+			
+			// create a new Page entry
 				
 			// for each question on the original page, copy it into the new page at the same index		
 			foreach ($questions as $question) {
@@ -349,15 +392,38 @@ class Owner_SurveyController extends Zend_Controller_Action
 			$conn->commit();
 		} catch (Exception $exc) {
 			$conn->rollback();
-			throw exc;
+			throw $exc;
 		}
 		
 		$this->_redirect('/owner/survey/show/' . $input->surveyId);
 	}
 	
-	// for each page starting with $firstPage, increment the PageNum for all questions on that page
+	// for each page starting with $firstPage, increment its PageNum
 	private function incrementPageNums($surveyId, $firstPage) {
+
 		$q = Doctrine_Query::create()
+			->select('p.ID, p.PageNum')
+			->from('Survey_Model_Page p')
+			->where('p.SurveyID = ?', $surveyId)
+			->addWhere('p.PageNum >= ?', $firstPage);
+		$pages = $q->fetchArray();
+		
+		foreach ($pages as $page) {
+			$q = Doctrine_Query::create()
+				->update('Survey_Model_Page p')
+				->set('p.PageNum', '?', $page['PageNum'] + 1)
+				->where('p.ID = ?', $page['ID']);
+			$q->execute();
+		}
+		
+		/*$q = Doctrine_Query::create()
+			->update('Survey_Model_Page p')
+			->set('p.PageNum', '?', 'p.PageNum + 1')
+			->where('p.SurveyID = ?', $surveyId)
+			->addWhere('p.PageNum >= ?', $firstPage);
+		$q->execute();*/
+		
+		/*$q = Doctrine_Query::create()
 			->select('q.*, s.ID as surveyId')
 			->from('Survey_Model_Question q')
 			->leftJoin('q.Survey_Model_Survey s')
@@ -371,25 +437,24 @@ class Owner_SurveyController extends Zend_Controller_Action
 				->set('q.PageNum', '?', $question['PageNum'] + 1)
 				->where('q.ID = ?', $question['ID']);
 			$q->execute();
-		}
+		}*/
 	}
 	
-	// for each page starting with $firstPage, decrement the PageNum for all questions on that page
+	// for each page starting with $firstPage, decrement its PageNum
 	private function decrementPageNums($surveyId, $firstPage) {
 
-		$q = Doctrine_Query::create()
-			->select('q.*, s.ID as surveyId')
-			->from('Survey_Model_Question q')
-			->leftJoin('q.Survey_Model_Survey s')
-			->where('s.ID = ?', $surveyId)
-			->addWhere('q.PageNum >= ?', $firstPage);
-		$questions = $q->fetchArray();
+	$q = Doctrine_Query::create()
+			->select('p.ID, p.PageNum')
+			->from('Survey_Model_Page p')
+			->where('p.SurveyID = ?', $surveyId)
+			->addWhere('p.PageNum >= ?', $firstPage);
+		$pages = $q->fetchArray();
 		
-		foreach ($questions as $question) {
+		foreach ($pages as $page) {
 			$q = Doctrine_Query::create()
-				->update('Survey_Model_Question q')
-				->set('q.PageNum', '?', $question['PageNum'] - 1)
-				->where('q.ID = ?', $question['ID']);
+				->update('Survey_Model_Page p')
+				->set('p.PageNum', '?', $page['PageNum'] - 1)
+				->where('p.ID = ?', $page['ID']);
 			$q->execute();
 		}
 	}

@@ -61,7 +61,7 @@ abstract class Survey_Model_BaseQuestion extends Doctrine_Record
              'notnull' => true,
              'autoincrement' => false,
              ));
-        $this->hasColumn('PageNum', 'integer', 4, array(
+        $this->hasColumn('PageID', 'integer', 4, array(
              'type' => 'integer',
              'length' => 4,
              'fixed' => false,

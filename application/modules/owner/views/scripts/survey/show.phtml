@@ -370,7 +370,13 @@ function EditQDialog() {
 
 
 
-	this.setupNew = function() {
+	this.setupNew = function(surveyId, text) {
+		_surveyId = surveyId;
+		_dlg.dialog('open');
+		_dlg.html(text);
+		
+		_questionId = $('#hiddenQuestionId').val();
+		
     	$('#cancel').click( function() {
     		var questionId = $('#hiddenQuestionId').val();
     		window.location = '/owner/question/delete/' + questionId;	
@@ -494,18 +500,13 @@ function EditQDialog() {
             	  'index' : newQuestionIndex.value },
                   //callback function
                   function (response) {
-                           
-                     	if (response.substr(0,5) == "ERROR") {
-                         	alert("Error: " + response.substr(6));
-                      	} else {
-							editQuestionDialog.dialog('open');		
-
-                      	editQuestionDialog.html(response);
-                      	
-                      	setupEditQuestionDialog(surveyId);   
-                    	setupNewQuestionDialog();
-                      }
-                  }
+                             
+                       	if (response.substr(0,5) == "ERROR") {
+                           	alert("Error: " + response.substr(6));
+                        } else {
+							editQDialog.setupNew(surveyId, response);
+                        }
+                    }
               );
 
 		});
@@ -524,12 +525,7 @@ function EditQDialog() {
                        	if (response.substr(0,5) == "ERROR") {
                            	alert("Error: " + response.substr(6));
                         } else {
-							/*editQuestionDialog.dialog('open');		
-
-                        	editQuestionDialog.html(response);
-                        	
-                        	setupEditQuestionDialog(surveyId);  */
-                        	editQDialog.setup(surveyId, response);
+							editQDialog.setup(surveyId, response);
                         }
                     }
                 );
@@ -652,6 +648,11 @@ button {
 	color:LightCyan;
 }
 
+.pageName {
+	color:DarkSlateGrey;
+	font-weight:bold;
+}
+
 
 </style>
 
@@ -679,7 +680,15 @@ $survey = $this->survey;
 <?php 
 for ($i = 1; $i <= $survey['NumPages']; $i++): // go through the pages
 	$page = $this->questions[$i]; ?>
-	<br><div class="PageDiv"><i>Page <?php echo $i; ?>&nbsp;&nbsp;&nbsp;</i>
+	<br><div class="PageDiv"><i>Page <?php echo $i; ?>&nbsp;&nbsp;&nbsp;&nbsp;</i>
+		<?php 
+		if (array_key_exists($i, $this->pages)) { 
+			echo '<span class="pageName">' . $this->pages[$i] . '</span>&nbsp;&nbsp;&nbsp;&nbsp;' .
+				'<button class="pageNameEditButton">Edit Name</button>'; 
+		} else {
+			echo '<button class="pageNameEditButton">Add Name</button>'; 
+		}
+		?>
 		<button class='pageDeleteButton'>Delete</button> 
 		<button class='pageMoveButton'>Move</button>
 		<button class='pageCopyButton'>Copy</button>

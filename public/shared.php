@@ -60,12 +60,12 @@ function deleteQuestionFromPage($questionId) {
 	->addWhere('q.ID = ' . $questionId);
 	$questions = $q->fetchArray();
 	if (count($questions) < 1) {
-		throw new Zend_Controller_Action_Exception('Deletion failed for some reason');
+		throw new Zend_Controller_Action_Exception('Deletion failed for some reason, question ID = ' . $questionId . ', user id = ' . $userId);
 	}
 
 	$surveyId = $questions[0]['SurveyID'];
-	$page = $questions[0]['PageNum'];
 	$index = $questions[0]['QuestionIndex'];
+	$page = $questions[0]['PageID'];
 
 	//$conn = Doctrine_Manager::connection();
 	//$conn->beginTransaction('deleteQuestionFromPage');
@@ -75,6 +75,7 @@ function deleteQuestionFromPage($questionId) {
 	->delete('Survey_Model_Question q')
 	->addWhere('q.ID = ?', $questionId);
 	$q->execute();
+
 
 	// update the other indices in this page
 	decrementQuestionIndices($surveyId, $userId, $page, $index);
@@ -133,7 +134,6 @@ function copyQuestion($surveyId, $questionId, $newPage, $newQuestionIndex) {
 	->addWhere('q.ID = ' . $questionId);
 	$questions = $q->fetchArray();
 	$origQuestion = $questions[0];
-	$origPage = $origQuestion['PageNum'];
 	$origIndex = $origQuestion['QuestionIndex'];
 	
 	if ($origQuestion['QuestionCategory'] == enums_QuestionCategory::MatrixOfChoicesChild) {
@@ -150,7 +150,7 @@ function copyQuestion($surveyId, $questionId, $newPage, $newQuestionIndex) {
 	$newQuestion->Text = $origQuestion['Text'];
 	$newQuestion->SurveyID = $surveyId;
 	$newQuestion->QuestionIndex = $newQuestionIndex;
-	$newQuestion->PageNum = $newPage;
+	$newQuestion->PageID = $newPage;
 	$newQuestion->CategoryID = $origQuestion['CategoryID'];
 	$newQuestion->RequireAnswer = $origQuestion['RequireAnswer'];
 	$newQuestion->save();
@@ -248,6 +248,24 @@ function copyQuestion($surveyId, $questionId, $newPage, $newQuestionIndex) {
 		
 }
 
+
+// return page ID corresponding to PageNum
+function getPageAtIndex($surveyId, $pageIndex) {
+	$q = Doctrine_Query::create()
+	->select('p.ID')
+	->from('Survey_Model_Page p')
+	->where('p.PageNum = ?', $pageIndex)
+	->addWhere('p.SurveyID = ?', $surveyId);
+	$pages = $q->fetchArray();
+
+	if (count($pages) == 0) {
+		throw new Zend_Controller_Action_Exception('No page found at index ' . $pageIndex . ', survey ID = ' . $surveyId);
+	}
+
+	return $pages[0]['ID'];
+}
+
+
 function incrementQuestionIndices($surveyId, $userId, $page, $firstIndex) {
 
 	$q = Doctrine_Query::create()
@@ -255,7 +273,7 @@ function incrementQuestionIndices($surveyId, $userId, $page, $firstIndex) {
 	->from('Survey_Model_Question q')
 	->leftJoin('q.Survey_Model_Survey s')
 	->where('q.SurveyID = ' . $surveyId)
-	->addWhere('q.PageNum = ' . $page)
+	->addWhere('q.PageID = ' . $page)
 	->addWhere('s.OwnerID = ' . $userId)
 	->addWhere('q.QuestionIndex >= ' . $firstIndex)
 	->addWhere('q.ParentQuestionID IS NULL');
@@ -277,7 +295,7 @@ function decrementQuestionIndices($surveyId, $userId, $page, $firstIndex) {
 	->from('Survey_Model_Question q')
 	->leftJoin('q.Survey_Model_Survey s')
 	->where('q.SurveyID = ' . $surveyId)
-	->addWhere('q.PageNum = ' . $page)
+	->addWhere('q.PageID = ' . $page)
 	->addWhere('s.OwnerID = ' . $userId)
 	->addWhere('q.QuestionIndex >= ' . $firstIndex)
 	->addWhere('q.ParentQuestionID IS NULL');

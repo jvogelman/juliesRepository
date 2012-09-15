@@ -43,7 +43,11 @@ class Survey_Model_Question extends Survey_Model_BaseQuestion
 				'local' => 'ID',
 				'foreign' => 'QuestionID'
 				));
-		
+
+		$this->hasOne('Survey_Model_Page', array(
+				'local' => 'PageID',
+				'foreign' => 'ID'
+				));
 	}
 
 }

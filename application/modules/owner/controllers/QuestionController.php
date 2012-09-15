@@ -193,12 +193,17 @@ class Owner_QuestionController extends Zend_Controller_Action
 			$input = new Zend_Filter_Input($filters, $validators);
 			$input->setData($this->getRequest()->getParams());			
 			
-
+			// #### delete
+			$myFile = "addAction.txt";
+			$fh = fopen($myFile, 'w');
+			fwrite($fh, 'got here 1\n');
 
 			if ($input->isValid())	{		
 				verifyUserMatchesSurvey($input->surveyId);
+			fwrite($fh, 'got here 2\n');
 				
 				$questionID = $this->addQuestionToPage($input->surveyId, $input->page, $input->index);
+			fwrite($fh, 'got here 3\n');
 		
 				// redirect to showEditAction
 				$this->_redirect('/owner/question/showedit?surveyId=' . $input->surveyId . '&questionId=' . $questionID);
@@ -209,21 +214,25 @@ class Owner_QuestionController extends Zend_Controller_Action
 		}
 		
 		echo $response;
+		fwrite($fh, $response);
 	}
 	
-	public function addQuestionToPage($surveyId, $page, $index) {
+	public function addQuestionToPage($surveyId, $pageIndex, $index) {
 		
 		$userId = getUserId();
+		
+		// get page ID corresponding to page index
+		$pageId = getPageAtIndex($surveyId, $pageIndex);
 	
 		// first update the other indices in this page
-		incrementQuestionIndices($surveyId, $userId, $page, $index);
+		incrementQuestionIndices($surveyId, $userId, $pageId, $index);
 		
 		// add new question to database
 		$q = new Survey_Model_Question;
 		$q->Text = '';
 		$q->SurveyID = $surveyId;
 		$q->QuestionIndex = $index;
-		$q->PageNum = $page;
+		$q->PageID = $pageId;
 		$q->CategoryID = enums_QuestionCategory::Undefined;
 		$q->RequireAnswer = 0;
 		$q->save();
@@ -675,9 +684,11 @@ class Owner_QuestionController extends Zend_Controller_Action
 			->from('Survey_Model_Question q')
 			->addWhere('q.ID = ' . $input->questionId);
 		$question = $q->fetchArray();
-		$origPage = $question[0]['PageNum'];
+		$origPageId = $question[0]['PageID'];
 		$origIndex = $question[0]['QuestionIndex'];		
 		
+		// get new page ID
+		$newPageId = getPageAtIndex($input->surveyId, $input->page);
 
 		// use a transaction so that either all or no changes get committed: 
 		
@@ -685,19 +696,17 @@ class Owner_QuestionController extends Zend_Controller_Action
 		$conn->beginTransaction();
 		try {
 		
-			// in the new page, update the indices for any questions that follow
-			incrementQuestionIndices($input->surveyId, $userId, $input->page, $input->newQuestionIndex);				
+			incrementQuestionIndices($input->surveyId, $userId, $newPageId, $input->newQuestionIndex);				
 			
 			// update the Question with the new page/index				
 			$q = Doctrine_Query::create()
 				->update('Survey_Model_Question q')
 				->set('q.QuestionIndex' ,'?',  $input->newQuestionIndex)
-				->set('q.PageNum', '?', $input->page)
+				->set('q.PageID', '?', $newPageId)
 				->where('q.ID = ?', $input->questionId);
 			$q->execute();
 					
-			// update the indices in the old page to account for the deleted question
-			decrementQuestionIndices($input->surveyId, $userId, $origPage, $origIndex + 1);
+			decrementQuestionIndices($input->surveyId, $userId, $origPageId, $origIndex + 1);
 		
 			$conn->commit();
 		} catch (Exception $exc) {
@@ -734,7 +743,8 @@ class Owner_QuestionController extends Zend_Controller_Action
 		$conn = Doctrine_Manager::connection();
 		$conn->beginTransaction();
 		try {
-			copyQuestion($input->surveyId, $input->questionId, $input->page, $input->newQuestionIndex);
+			$pageId = getPageAtIndex($input->surveyId, $input->page);
+			copyQuestion($input->surveyId, $input->questionId, $pageId, $input->newQuestionIndex);
 			$conn->commit();
 		} catch (Exception $exc) {
 			$conn->rollback();
