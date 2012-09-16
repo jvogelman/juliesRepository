@@ -397,6 +397,49 @@ class Owner_SurveyController extends Zend_Controller_Action
 		$this->_redirect('/owner/survey/show/' . $input->surveyId);
 	}
 	
+	function editpagenameAction() {
+		session_start();
+		
+		$validators = array(
+				'surveyId' => array('NotEmpty', 'Int'),
+				'pageIndex' => array('NotEmpty', 'Int'),
+				'pageName' => array()
+		);
+			
+		$filters = array(
+				'surveyId' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+				'pageIndex' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+				'pageName' => array()
+		);
+		
+		$input = new Zend_Filter_Input($filters, $validators);
+		$input->setData($this->getRequest()->getParams());		
+			
+		verifyUserMatchesSurvey($input->surveyId);
+		
+		
+		// remove begin and end quotes from page name
+		$pageName = $input->pageName;
+		
+		if (strlen($pageName) >= 6 && substr($pageName, 0, 6) == '&quot;') {
+			$pageName = substr($pageName, 6); // 6 = length of '&quot;'
+			fwrite($fh, "compare a successful: " . $pageName);
+		}
+		if (strlen($pageName) >= 6 && substr($pageName, strlen($pageName) - 6, 6) == '&quot;') {
+			$pageName = substr($pageName, 0, strlen($pageName) - 6);
+			fwrite($fh, "compare b successful: " . $pageName);
+		}
+		
+		$q = Doctrine_Query::create()
+			->update('Survey_Model_Page p')
+			->set('p.Name', '?', $pageName)
+			->where('p.PageNum = ?', $input->pageIndex)
+			->addWhere('p.SurveyID = ?', $input->surveyId);
+		$q->execute();
+
+		$this->_redirect('/owner/survey/show/' . $input->surveyId);
+	}
+	
 	// for each page starting with $firstPage, increment its PageNum
 	private function incrementPageNums($surveyId, $firstPage) {
 
@@ -414,29 +457,6 @@ class Owner_SurveyController extends Zend_Controller_Action
 				->where('p.ID = ?', $page['ID']);
 			$q->execute();
 		}
-		
-		/*$q = Doctrine_Query::create()
-			->update('Survey_Model_Page p')
-			->set('p.PageNum', '?', 'p.PageNum + 1')
-			->where('p.SurveyID = ?', $surveyId)
-			->addWhere('p.PageNum >= ?', $firstPage);
-		$q->execute();*/
-		
-		/*$q = Doctrine_Query::create()
-			->select('q.*, s.ID as surveyId')
-			->from('Survey_Model_Question q')
-			->leftJoin('q.Survey_Model_Survey s')
-			->where('s.ID = ?', $surveyId)
-			->addWhere('q.PageNum >= ?', $firstPage);
-		$questions = $q->fetchArray();
-		
-		foreach ($questions as $question) {
-			$q = Doctrine_Query::create()
-				->update('Survey_Model_Question q')
-				->set('q.PageNum', '?', $question['PageNum'] + 1)
-				->where('q.ID = ?', $question['ID']);
-			$q->execute();
-		}*/
 	}
 	
 	// for each page starting with $firstPage, decrement its PageNum

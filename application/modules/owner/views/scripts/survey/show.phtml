@@ -20,6 +20,64 @@ String.prototype.trim = function() {
     return this.replace(/^\s+|\s+$/g, "");
 };
 
+var promptDialog = new PromptDialog();
+
+function PromptDialog() {
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// PRIVATE VARIABLES
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+		
+	var _dlg = $('<div id="promptDialog"></div>')
+	//.html('<p><span id="prompt"></span></p><p><input type="text" id="promptTextField"/></p><p><input type="submit" value="Okay"/>' + 
+	//		'<button id="cancelPromptDialog">Cancel</button></p>')
+	.html('<p><input type="text" id="promptTextField" size="70"/></p><p><button id="okayPromptDialog">Okay</button>' + 
+			'<button id="cancelPromptDialog">Cancel</button></p>')
+	.dialog({
+		autoOpen: false,
+		//title: 'Edit Question',
+		modal: true,
+		//width:'auto'
+		width: 700,
+		//height: window.innerHeight - 50,
+		height: 'auto'
+	});
+
+	var _this = this;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//PRIVATE METHODS
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	$('#cancelPromptDialog').live('click', function(){
+		_dlg.dialog('close');
+		_dlg.unbind('submit');
+	});
+
+	$('#okayPromptDialog').live('click', function(){
+		_dlg.dialog('close');
+		_dlg.unbind('submit');
+	});
+	
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//PRIVILEGED METHODS
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+	this.open = function(prompt, textFieldVal, submitFunction) {
+		//_dlg.html(html);
+		//$('#promptDialog #prompt').html(prompt);
+		_dlg.dialog('option', 'title', prompt);
+		$('#promptTextField').val(textFieldVal);
+
+		_dlg.dialog('open');
+
+		$('#okayPromptDialog').click(submitFunction);
+	}
+
+	
+}
+
 
 var editQDialog = new EditQDialog();
 
@@ -422,6 +480,24 @@ function EditQDialog() {
                   
         });
 
+        $('.pageNameEditButton').click(function() {
+            // is there currently a name? If so, populate it in the prompt
+            var currentName = '';
+            if ($(this).siblings('.pageName').length > 0) {
+				currentName = $(this).siblings('.pageName')[0].innerHTML;
+            }
+
+            promptDialog._pageIndex = $(this).siblings('.page')[0].value;
+                
+			promptDialog.open('What would you like to set the name to?', currentName, 
+				function() {
+		            var surveyId = $('#SurveyId').val();		            
+		            var pageName = $('#promptTextField').val();
+					window.location = '/owner/survey/editpagename/' + surveyId + '/' + promptDialog._pageIndex + '/"' + pageName + '"';
+				}
+			);
+        });
+
 		$('.pageAddButton').click(function() {
 			var newPageIndex = $(this).siblings('.page')[0];
             var surveyId = $('#SurveyId').val();
@@ -682,9 +758,9 @@ for ($i = 1; $i <= $survey['NumPages']; $i++): // go through the pages
 	$page = $this->questions[$i]; ?>
 	<br><div class="PageDiv"><i>Page <?php echo $i; ?>&nbsp;&nbsp;&nbsp;&nbsp;</i>
 		<?php 
-		if (array_key_exists($i, $this->pages)) { 
+		if ($this->pages[$i] != '') { 
 			echo '<span class="pageName">' . $this->pages[$i] . '</span>&nbsp;&nbsp;&nbsp;&nbsp;' .
-				'<button class="pageNameEditButton">Edit Name</button>'; 
+				'<button class="pageNameEditButton">Edit Name</button>';
 		} else {
 			echo '<button class="pageNameEditButton">Add Name</button>'; 
 		}
