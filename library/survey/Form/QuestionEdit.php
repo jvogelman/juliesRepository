@@ -69,7 +69,7 @@ abstract class Survey_Form_QuestionEdit extends Zend_Form
 
 
 		$save = new Zend_Form_Element_Submit('save');
-		$save->setLabel('Save')
+		$save->setLabel('Save/Close')
 		->setDecorators($this->buttonDecorators);
 
 		$cancel = new Zend_Form_Element_Button('cancel');
@@ -79,6 +79,14 @@ abstract class Survey_Form_QuestionEdit extends Zend_Form
 		
 		$this->hiddenQuestionId = new Zend_Form_Element_Hidden('hiddenQuestionId');
 		$this->hiddenQuestionId->setOptions(array(
+				'class' => 'hidden'))
+				->setDecorators(array(
+						array('ViewHelper')));
+		
+		// hidden boolean value: if true, dialog will close after being submitted
+		// (determined by which button is clicked by user: 'Save and Close' vs. 'Save/Next Question')
+		$this->hiddenCloseDlg = new Zend_Form_Element_Hidden('hiddenCloseDlg');
+		$this->hiddenCloseDlg->setOptions(array(
 				'class' => 'hidden'))
 				->setDecorators(array(
 						array('ViewHelper')));
@@ -92,7 +100,8 @@ abstract class Survey_Form_QuestionEdit extends Zend_Form
 		
 		$this->addElement($save)
 			->addElement($cancel)
-			->addElement($this->hiddenQuestionId);
+			->addElement($this->hiddenQuestionId)
+			->addElement($this->hiddenCloseDlg);
 		
 	}
 	

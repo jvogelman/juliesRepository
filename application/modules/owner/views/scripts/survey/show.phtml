@@ -12,8 +12,8 @@ QuestionCategory = {
 	CommentEssayBox : 3,
 	DescriptiveText : 4,
 	MatrixOfChoices : 5,
-	MatrixOfChoicesChild : 6
-		
+	MatrixOfChoicesChild : 6,
+	Undefined : 999
 }
 
 String.prototype.trim = function() {
@@ -110,6 +110,7 @@ function EditQDialog() {
 	var _surveyId = -1;
 	var _type = -1;
 	var _this = this;
+	var _newQuestion = false;
 
 	// this is for the MatrixOfChoices edit dialog
 	var _updateChoicesDlg = $('<div id="updateChoicesDialog"></div>')
@@ -139,7 +140,7 @@ function EditQDialog() {
                     } else {
 						unbind();
 
-                    	_this.setup(_surveyId, response);	// call _dlg.html(response); here
+                    	_this.setup(_surveyId, response, _newQuestion);	// call _dlg.html(response); here
                     }
                 }
 		)
@@ -163,8 +164,33 @@ function EditQDialog() {
 	});
 
 	$('#cancel').live('click', function() {
+		e.preventDefault();	// prevents submit
 		unbind();
 		_dlg.dialog('close');
+	});
+
+	// the "Save/Close" submit button
+	$('#save').live('click', function() {
+		$('#hiddenCloseDlg').val(1);
+	});
+
+	// the "Save/Next Question" submit button
+	$('#saveNextQuestionButton').live('click', function(e) {
+		e.preventDefault();	// prevents submit
+		$('#hiddenCloseDlg').val(0);
+		var temp = $(_dlg).find('form');
+		var data = $(_dlg).find('form').serialize();
+		$.post('/owner/question/save/' + _questionId, data,
+                //callback function
+                function (response) {
+                	if (response.substr(0,5) == "ERROR") {
+                    	alert("Error: " + response.substr(6));
+                    } else {
+                        unbind();
+						_this.setupNew(_surveyId, response);
+                    }
+                }
+            );
 	});
 
 
@@ -378,11 +404,13 @@ function EditQDialog() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-	this.setup = function(surveyId, text) {
+	this.setup = function(surveyId, text, newQuestion) {
 
 		_surveyId = surveyId;
 		_dlg.dialog('open');
 		_dlg.html(text);
+		_newQuestion = newQuestion;
+		
 		// add callbacks here
 		_type = parseInt($('#questionType').val());
 		switch(_type) {
@@ -423,6 +451,12 @@ function EditQDialog() {
 
 
 		_dlg.dialog('option', 'position','top');   
+
+		if (_newQuestion) {
+			// create a new "Save/Next Question" button
+			var submitButton = $(_dlg).find('#save')[0];
+			$(submitButton).after('<button id="saveNextQuestionButton">Save/Next Question</button>');
+		}
 		
 	}
 
@@ -432,6 +466,12 @@ function EditQDialog() {
 		_surveyId = surveyId;
 		_dlg.dialog('open');
 		_dlg.html(text);
+		_type = QuestionCategory.Unknown;
+		_newQuestion = true;
+
+		// create a new "Save/Next Question" button
+		var submitButton = $(_dlg).find('#save')[0];
+		$(submitButton).after('<button id="saveNextQuestionButton">Save/Next Question</button>');
 		
 		_questionId = $('#hiddenQuestionId').val();
 		
@@ -439,6 +479,7 @@ function EditQDialog() {
     		var questionId = $('#hiddenQuestionId').val();
     		window.location = '/owner/question/delete/' + questionId;	
     	});
+
 	}
 }
 
@@ -601,7 +642,7 @@ function EditQDialog() {
                        	if (response.substr(0,5) == "ERROR") {
                            	alert("Error: " + response.substr(6));
                         } else {
-							editQDialog.setup(surveyId, response);
+							editQDialog.setup(surveyId, response, false);
                         }
                     }
                 );

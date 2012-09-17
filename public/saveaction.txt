@@ -1,0 +1,3 @@
+question = test5
+hiddenCloseDlg = 0
+set no render\ninput is valid: questionId = 13got here 0\ngot here 1\ngot here 2\nready to redirect to add, new index = 4

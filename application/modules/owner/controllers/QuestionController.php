@@ -193,17 +193,11 @@ class Owner_QuestionController extends Zend_Controller_Action
 			$input = new Zend_Filter_Input($filters, $validators);
 			$input->setData($this->getRequest()->getParams());			
 			
-			// #### delete
-			$myFile = "addAction.txt";
-			$fh = fopen($myFile, 'w');
-			fwrite($fh, 'got here 1\n');
-
+			
 			if ($input->isValid())	{		
 				verifyUserMatchesSurvey($input->surveyId);
-			fwrite($fh, 'got here 2\n');
 				
 				$questionID = $this->addQuestionToPage($input->surveyId, $input->page, $input->index);
-			fwrite($fh, 'got here 3\n');
 		
 				// redirect to showEditAction
 				$this->_redirect('/owner/question/showedit?surveyId=' . $input->surveyId . '&questionId=' . $questionID);
@@ -276,7 +270,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 			$conn->commit();
 		} catch (Exception $exc) {
 			$conn->rollback();
-			throw exc;
+			throw $exc;
 		}
 				
 		$this->_redirect('/owner/survey/show/' . $surveyId);
@@ -391,7 +385,8 @@ class Owner_QuestionController extends Zend_Controller_Action
 				'questionId' => array('NotEmpty', 'Int'),
 				'question' => array('NotEmpty'),
 				'questionType' => array(),
-				'requireAnswer' => array()
+				'requireAnswer' => array(),
+				'hiddenCloseDlg' => array('NotEmpty', 'Int')
 		);
 		
 		// already filtered, so just set to empty arrays
@@ -399,28 +394,29 @@ class Owner_QuestionController extends Zend_Controller_Action
 				'questionId' => array('HtmlEntities', 'StripTags', 'StringTrim'),
 				'question' => array(),//'HtmlEntities', 'StringTrim'), // #### will we still be able to display original html tags back to user?
 				'questionType' => array(),
-				'requireAnswer' => array()
+				'requireAnswer' => array(),
+				'hiddenCloseDlg' => array('HtmlEntities', 'StripTags', 'StringTrim')
 		);
 			
 		$input = new Zend_Filter_Input($filters, $validators);
 		$input->setData($this->getRequest()->getParams());
 		
-
-		// #### delete
-		$myFile = "testFile.txt";
-		$fh = fopen($myFile, 'w');
-		fwrite($fh, $input->question . "\n");
-		fwrite($fh, $this->getRequest()->getParam('question'));
+		if ($input->hiddenCloseDlg == 0) {
+			$this->_helper->viewRenderer->setNoRender();
+			$this->_helper->getHelper('layout')->disableLayout();
+		}
 
 		if ($input->isValid())
 		{
+		fwrite($fh, 'input is valid: questionId = ' . $input->questionId);
 			// verify that this user is authorized to update this survey
 			verifyUserMatchesQuestion($input->questionId);
 			
 			$q = Doctrine_Query::create()
-				->select('q.*, s.ID as surveyId')
+				->select('q.*, s.ID as surveyId, p.PageNum as PageNum')
 				->from('Survey_Model_Question q')
 				->leftJoin('q.Survey_Model_Survey s')
+				->leftJoin('q.Survey_Model_Page p')
 				->addWhere('q.ID = ?', $input->questionId);
 			$question = $q->fetchArray();
 			if (sizeof($question) == 0) {
@@ -428,7 +424,6 @@ class Owner_QuestionController extends Zend_Controller_Action
 			}
 			
 			$surveyId = $question[0]['surveyId'];
-			
 			
 			$questionType = $this->getRequest()->getParam('questionType');
 			$requireAnswer;
@@ -451,7 +446,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 					->where('q.ID = ?', $input->questionId);
 				$q->execute();
 			
-			
+
 				switch ($questionType) {
 				case enums_QuestionCategory::MultipleChoiceOneAnswer:
 				case enums_QuestionCategory::MultipleChoiceMultipleAnswers:			
@@ -647,9 +642,23 @@ class Owner_QuestionController extends Zend_Controller_Action
 				$conn->commit();
 			} catch (Exception $exc) {
 				$conn->rollback();
-				throw exc;
+				
+				if ($input->hiddenCloseDlg == 1) {
+					throw $exc;
+				} else {
+					echo $exc;
+				}
 			}
-			$this->_redirect('/owner/survey/show/' . $surveyId);
+			
+
+			
+			// if "Save/Close" was clicked, then close the dialog;
+			// if "Save/Next Question" was clicked, then show user a new dialog
+			if ($input->hiddenCloseDlg == 1) {
+				$this->_redirect('/owner/survey/show/' . $surveyId);
+			} else {
+				$this->_redirect('/owner/question/add?surveyId=' . $surveyId . '&page=' . $question[0]['PageNum'] . '&index=' . ($question[0]['QuestionIndex'] + 1));		
+			}
 		}
 	}
 	
@@ -711,7 +720,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 			$conn->commit();
 		} catch (Exception $exc) {
 			$conn->rollback();
-			throw exc;
+			throw $exc;
 		}
 		
 		
@@ -748,7 +757,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 			$conn->commit();
 		} catch (Exception $exc) {
 			$conn->rollback();
-			throw exc;
+			throw $exc;
 		}
 			
 		$this->_redirect('/owner/survey/show/' . $input->surveyId);
