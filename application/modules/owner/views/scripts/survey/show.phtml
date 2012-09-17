@@ -163,7 +163,7 @@ function EditQDialog() {
     	unbind();
 	});
 
-	$('#cancel').live('click', function() {
+	$('#cancel').live('click', function(e) {
 		e.preventDefault();	// prevents submit
 		unbind();
 		_dlg.dialog('close');
@@ -397,6 +397,31 @@ function EditQDialog() {
 		$('#updateChoicesRow').unbind('click');
 		$('#updateChoicesColumn').unbind('click');
 	}
+
+	function setMainCSS() {
+		$('.zendFormElement').css({'font-size': 'medium', 'margin': '1px'});
+		$('button').css({'font-size': 'small'});
+		$('#save').css({'font-size': 'small'});
+		$('#saveNextQuestion').css({'font-size': 'small'});
+	}
+
+	function setDialogPositionAndSize() {
+
+		// fix the height of the dialog: if the dialog's too big, make sure it doesn't extend too far down
+		var dialogHeight = parseInt($(_dlg).css('height'), 10);
+		if (dialogHeight > window.innerHeight - 50) {
+	    	_dlg.dialog('option', 'height', window.innerHeight - 50);
+		} else {
+			_dlg.dialog('option', 'height', 'auto');
+	    	dialogHeight = parseInt($(_dlg).css('height'), 10);
+	    	if (dialogHeight > window.innerHeight - 50) {
+	    		_dlg.dialog('option', 'height', window.innerHeight - 50);
+	    	}
+		}
+
+		_dlg.dialog('option', 'position','top');   
+
+	}
     
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -410,6 +435,11 @@ function EditQDialog() {
 		_dlg.dialog('open');
 		_dlg.html(text);
 		_newQuestion = newQuestion;
+
+
+		if (_newQuestion) {
+			this.setupNew(surveyId, text);
+		}
 		
 		// add callbacks here
 		_type = parseInt($('#questionType').val());
@@ -432,31 +462,11 @@ function EditQDialog() {
 
 		_questionId = $('#hiddenQuestionId').val();
 
-		// set css for the elements in the form
-		$('.zendFormElement').css({'font-size': 'medium', 'margin': '1px'});
-		$('button').css({'font-size': 'small'});
-		$('#save').css({'font-size': 'small'});
-
 		// fix the height of the dialog: if the dialog's too big, make sure it doesn't extend too far down
-		var dialogHeight = parseInt($(_dlg).css('height'), 10);
-		if (dialogHeight > window.innerHeight - 50) {
-	    	_dlg.dialog('option', 'height', window.innerHeight - 50);
-		} else {
-			_dlg.dialog('option', 'height', 'auto');
-	    	dialogHeight = parseInt($(_dlg).css('height'), 10);
-	    	if (dialogHeight > window.innerHeight - 50) {
-	    		_dlg.dialog('option', 'height', window.innerHeight - 50);
-	    	}
-		}
+		setDialogPositionAndSize();
 
-
-		_dlg.dialog('option', 'position','top');   
-
-		if (_newQuestion) {
-			// create a new "Save/Next Question" button
-			var submitButton = $(_dlg).find('#save')[0];
-			$(submitButton).after('<button id="saveNextQuestionButton">Save/Next Question</button>');
-		}
+		// set css for the elements in the form
+		setMainCSS();
 		
 	}
 
@@ -479,6 +489,11 @@ function EditQDialog() {
     		var questionId = $('#hiddenQuestionId').val();
     		window.location = '/owner/question/delete/' + questionId;	
     	});
+
+    	setDialogPositionAndSize();
+
+		// set css for the elements in the form
+		setMainCSS();
 
 	}
 }

@@ -373,11 +373,11 @@ class Owner_QuestionController extends Zend_Controller_Action
 	}
 	
 	public function saveAction()
-	{
+	{		
+		
 		session_start();
 		
 		$userId = getUserId();
-				
 		
 		// first do the general stuff that applies to all question types
 		
@@ -401,263 +401,267 @@ class Owner_QuestionController extends Zend_Controller_Action
 		$input = new Zend_Filter_Input($filters, $validators);
 		$input->setData($this->getRequest()->getParams());
 		
-		if ($input->hiddenCloseDlg == 0) {
+		if ($input->hiddenCloseDlg == 0) {	// "Save/Next Question" button clicked
 			$this->_helper->viewRenderer->setNoRender();
 			$this->_helper->getHelper('layout')->disableLayout();
 		}
-
-		if ($input->isValid())
-		{
-		fwrite($fh, 'input is valid: questionId = ' . $input->questionId);
-			// verify that this user is authorized to update this survey
-			verifyUserMatchesQuestion($input->questionId);
 			
-			$q = Doctrine_Query::create()
-				->select('q.*, s.ID as surveyId, p.PageNum as PageNum')
-				->from('Survey_Model_Question q')
-				->leftJoin('q.Survey_Model_Survey s')
-				->leftJoin('q.Survey_Model_Page p')
-				->addWhere('q.ID = ?', $input->questionId);
-			$question = $q->fetchArray();
-			if (sizeof($question) == 0) {
-				throw new Zend_Controller_Action_Exception('No Question matches question ID ' . $input->questionId);
-			}
-			
-			$surveyId = $question[0]['surveyId'];
-			
-			$questionType = $this->getRequest()->getParam('questionType');
-			$requireAnswer;
-			if ($questionType == enums_QuestionCategory::DescriptiveText) {
-				$requireAnswer = 0;
-			} else {
-				$requireAnswer = $input->requireAnswer;
-			}
-			
-			$conn = Doctrine_Manager::connection();
-			$conn->beginTransaction();
-			try {
-				// update the Question in the DB according to form
-				// #### should this be in the form of some transaction? 
-				$q = Doctrine_Query::create()
-					->update('Survey_Model_Question q')
-					->set('q.Text', '?', $input->question)
-					->set('q.CategoryID' ,'?',  $questionType) 
-					->set('q.RequireAnswer', '?', $requireAnswer)
-					->where('q.ID = ?', $input->questionId);
-				$q->execute();
-			
-
-				switch ($questionType) {
-				case enums_QuestionCategory::MultipleChoiceOneAnswer:
-				case enums_QuestionCategory::MultipleChoiceMultipleAnswers:			
+		try {				
 	
-					$form = new Survey_Form_MultipleChoiceQuestion;
-					
-					if ($form->isValid($this->getRequest()->getPost()))
-					{
-						if (!$form->getSubForm('selection')) {
-							throw new Zend_Controller_Action_Exception('Can\'t find subform "selection"');
-						}
+			if ($input->isValid())
+			{
+				// verify that this user is authorized to update this survey
+				verifyUserMatchesQuestion($input->questionId);
+				
+				$q = Doctrine_Query::create()
+					->select('q.*, s.ID as surveyId, p.PageNum as PageNum')
+					->from('Survey_Model_Question q')
+					->leftJoin('q.Survey_Model_Survey s')
+					->leftJoin('q.Survey_Model_Page p')
+					->addWhere('q.ID = ?', $input->questionId);
+				$question = $q->fetchArray();
+				if (sizeof($question) == 0) {
+					throw new Zend_Controller_Action_Exception('No Question matches question ID ' . $input->questionId);
+				}
+				
+				$surveyId = $question[0]['surveyId'];
+				
+				$questionType = $this->getRequest()->getParam('questionType');
+				$requireAnswer;
+				if ($questionType == enums_QuestionCategory::DescriptiveText) {
+					$requireAnswer = 0;
+				} else {
+					$requireAnswer = $input->requireAnswer;
+				}
+				
+				$conn = Doctrine_Manager::connection();
+				$conn->beginTransaction();
+				try {
+					// update the Question in the DB according to form
+					// #### should this be in the form of some transaction? 
+					$q = Doctrine_Query::create()
+						->update('Survey_Model_Question q')
+						->set('q.Text', '?', $input->question)
+						->set('q.CategoryID' ,'?',  $questionType) 
+						->set('q.RequireAnswer', '?', $requireAnswer)
+						->where('q.ID = ?', $input->questionId);
+					$q->execute();
+				
+	
+					switch ($questionType) {
+					case enums_QuestionCategory::MultipleChoiceOneAnswer:
+					case enums_QuestionCategory::MultipleChoiceMultipleAnswers:			
+		
+						$form = new Survey_Form_MultipleChoiceQuestion;
 						
-						if (!$form->getSubForm('selection')->isValid($this->getRequest()->getParams())){
-							throw new Zend_Controller_Action_Exception('Zend subform "selection" input is invalid');
-						}			
-						
-						// update Selections	
-						// each selection may or may not exist: to simplify, just delete all selections and add them back in
-						$q = Doctrine_Query::create()
-							->delete('Survey_Model_Selection s')
-							->addWhere('s.QuestionID = ?', $input->questionId);
-						$q->execute();
-						
-						$selections = $this->getRequest()->getParam('selection');
-						for ($i = 1; $i <= count($selections); $i++) {
-							// insert 
+						if ($form->isValid($this->getRequest()->getPost()))
+						{
+							if (!$form->getSubForm('selection')) {
+								throw new Zend_Controller_Action_Exception('Can\'t find subform "selection"');
+							}
 							
-							if ($selections[$i] != ''){	// #### what if middle element is empty? let's use javascript to prevent that
-								$selectionText = $selections[$i];
+							if (!$form->getSubForm('selection')->isValid($this->getRequest()->getParams())){
+								throw new Zend_Controller_Action_Exception('Zend subform "selection" input is invalid');
+							}			
+							
+							// update Selections	
+							// each selection may or may not exist: to simplify, just delete all selections and add them back in
+							$q = Doctrine_Query::create()
+								->delete('Survey_Model_Selection s')
+								->addWhere('s.QuestionID = ?', $input->questionId);
+							$q->execute();
+							
+							$selections = $this->getRequest()->getParam('selection');
+							for ($i = 1; $i <= count($selections); $i++) {
+								// insert 
+								
+								if ($selections[$i] != ''){	// #### what if middle element is empty? let's use javascript to prevent that
+									$selectionText = $selections[$i];
+									$s = new Survey_Model_Selection;
+									$s->SelectionIndex = $i;
+									$s->Text = $selectionText;
+									$s->QuestionID = $input->questionId;
+								
+									$s->save();
+								}
+								
+							}
+							
+							// update "Other" field
+							
+							// get the value for otherFieldSize, which is only available if addOtherField is set
+							$otherFieldSize = 0;
+							if ($this->getRequest()->getParam('otherField')) {
+								$otherFieldSize = $this->getRequest()->getParam('otherFieldSize');
+							}
+							
+							// is this question ID already in the MultipleChoiceQuestion table?
+							$q = Doctrine_Query::create()
+								->from('Survey_Model_Multiplechoicequestion m')
+								->where('m.QuestionID = ?', $input->questionId);
+							$mcqs = $q->fetchArray();
+							
+							if (sizeof($mcqs) == 0) {
+								// not in there, so add it
+								$mcq = new Survey_Model_Multiplechoicequestion;
+								$mcq->QuestionID = $input->questionId;
+								$mcq->AddOtherField = $this->getRequest()->getParam('otherField');
+								if ($this->getRequest()->getParam('otherField')) {
+									$mcq->SingleLine = $otherFieldSize;
+								}
+								$mcq->save();
+							} else {
+								// already in there, so update it
+								$q = Doctrine_Query::create()
+									->update('Survey_Model_Multiplechoicequestion m')
+									->set('m.AddOtherField', '?', $this->getRequest()->getParam('otherField'))
+									->set('m.SingleLine' ,'?', $otherFieldSize)
+									->where('m.QuestionID = ?', $input->questionId);
+								$q->execute();
+							}
+							
+						} else {
+							throw new Zend_Controller_Action_Exception('Input is invalid');
+						}
+						break;
+					case enums_QuestionCategory::CommentEssayBox:
+						$form = new Survey_Form_CommentEssayBoxQuestion;
+						
+						if ($form->isValid($this->getRequest()->getPost()))
+						{
+							// is this question ID already in the EssayBoxQuestion table?
+							$q = Doctrine_Query::create()
+								->from('Survey_Model_Essayboxquestion e')
+								->where('e.QuestionID = ?', $input->questionId);
+							$ebqs = $q->fetchArray();
+			
+							if (sizeof($ebqs) == 0) {
+								// not in there, so add it
+								$ebq = new Survey_Model_Essayboxquestion;
+								$ebq->QuestionID = $input->questionId;
+								$ebq->SingleLine = $this->getRequest()->getParam('textBoxSize');
+								$ebq->save();
+							} else {
+								// already in there, so update it
+								$q = Doctrine_Query::create()
+									->update('Survey_Model_Essayboxquestion e')
+									->set('e.SingleLine', '?', $this->getRequest()->getParam('textBoxSize'))
+									->where('e.QuestionID = ?', $input->questionId);
+								$q->execute();
+							}
+						} else {
+							throw new Zend_Controller_Action_Exception('Input is invalid');
+						}
+						break;
+					case enums_QuestionCategory::DescriptiveText:
+						// nothing left to do
+						break;
+					case enums_QuestionCategory::MatrixOfChoices:
+		
+						$form = new Survey_Form_MatrixOfChoicesQuestion;
+						
+						if ($form->isValid($this->getRequest()->getPost()))
+						{
+							// is this question ID already in the MatrixOfChoicesQuestion table?
+							$q = Doctrine_Query::create()
+							->from('Survey_Model_Matrixofchoicesquestion s')
+							->where('s.QuestionID = ?', $input->questionId);
+							$mcqs = $q->fetchArray();
+			
+							if (sizeof($mcqs) == 0) {
+								// not in there, so add it
+								$mcq = new Survey_Model_Matrixofchoicesquestion;
+								$mcq->QuestionID = $input->questionId;
+								$mcq->RandomizeAnswers = $this->getRequest()->getParam('randomize');
+								$mcq->save();
+							} else {
+								// already in there, so update it
+								$q = Doctrine_Query::create()
+									->update('Survey_Model_Matrixofchoicesquestion s')
+									->set('s.RandomizeAnswers', '?', $this->getRequest()->getParam('randomize'))
+									->where('s.QuestionID = ?', $input->questionId);
+								$q->execute();
+							}
+							
+							// Update the row choices (these are the child questions of this question)
+							// Delete the old ones and re-add
+							$q = Doctrine_Query::create()
+								->delete('Survey_Model_Question q')
+								->addWhere('q.ParentQuestionID = ?', $input->questionId);
+							$q->execute();
+							
+							// hiddenRowChoices value is comma delimited
+							$rowChoices = $this->getRequest()->getParam('hiddenRowChoices');
+							$i = 1;
+							while (strpos($rowChoices, ',')) {
+								$comma = strpos($rowChoices, ',');
+								$cq = new Survey_Model_Question;
+								$cq->Text = substr($rowChoices, 0, $comma);
+								$cq->SurveyID = $question[0]['SurveyID'];
+								$cq->QuestionIndex = $i++;
+								$cq->CategoryID = enums_QuestionCategory::MatrixOfChoicesChild;
+								$cq->ParentQuestionID = $input->questionId;
+								$cq->RequireAnswer = $input->requireAnswer;
+								
+								$rowChoices = substr($rowChoices, $comma + 1);
+							
+								$cq->save();
+							}				
+		
+							
+							// Update the column choices (these are the entries in the Selection table for this question)
+							// Delete the old ones and re-add
+							$q = Doctrine_Query::create()
+								->delete('Survey_Model_Selection s')
+								->addWhere('s.QuestionID = ?', $input->questionId);
+							$q->execute();
+							
+							// hiddenColumnChoices value is comma delimited
+							$columnChoices = $this->getRequest()->getParam('hiddenColumnChoices');
+							$i = 1;
+							while (strpos($columnChoices, ',')) {
+								$comma = strpos($columnChoices, ',');
 								$s = new Survey_Model_Selection;
-								$s->SelectionIndex = $i;
-								$s->Text = $selectionText;
+								$s->SelectionIndex = $i++;
+								$s->Text = substr($columnChoices, 0, $comma);
 								$s->QuestionID = $input->questionId;
+								$columnChoices = substr($columnChoices, $comma + 1);
 							
 								$s->save();
 							}
+						} else {
 							
-						}
-						
-						// update "Other" field
-						
-						// get the value for otherFieldSize, which is only available if addOtherField is set
-						$otherFieldSize = 0;
-						if ($this->getRequest()->getParam('otherField')) {
-							$otherFieldSize = $this->getRequest()->getParam('otherFieldSize');
-						}
-						
-						// is this question ID already in the MultipleChoiceQuestion table?
-						$q = Doctrine_Query::create()
-							->from('Survey_Model_Multiplechoicequestion m')
-							->where('m.QuestionID = ?', $input->questionId);
-						$mcqs = $q->fetchArray();
-						
-						if (sizeof($mcqs) == 0) {
-							// not in there, so add it
-							$mcq = new Survey_Model_Multiplechoicequestion;
-							$mcq->QuestionID = $input->questionId;
-							$mcq->AddOtherField = $this->getRequest()->getParam('otherField');
-							if ($this->getRequest()->getParam('otherField')) {
-								$mcq->SingleLine = $otherFieldSize;
-							}
-							$mcq->save();
-						} else {
-							// already in there, so update it
-							$q = Doctrine_Query::create()
-								->update('Survey_Model_Multiplechoicequestion m')
-								->set('m.AddOtherField', '?', $this->getRequest()->getParam('otherField'))
-								->set('m.SingleLine' ,'?', $otherFieldSize)
-								->where('m.QuestionID = ?', $input->questionId);
-							$q->execute();
-						}
-						
-					} else {
-						throw new Zend_Controller_Action_Exception('Input is invalid');
-					}
-					break;
-				case enums_QuestionCategory::CommentEssayBox:
-					$form = new Survey_Form_CommentEssayBoxQuestion;
-					
-					if ($form->isValid($this->getRequest()->getPost()))
-					{
-						// is this question ID already in the EssayBoxQuestion table?
-						$q = Doctrine_Query::create()
-							->from('Survey_Model_Essayboxquestion e')
-							->where('e.QuestionID = ?', $input->questionId);
-						$ebqs = $q->fetchArray();
-		
-						if (sizeof($ebqs) == 0) {
-							// not in there, so add it
-							$ebq = new Survey_Model_Essayboxquestion;
-							$ebq->QuestionID = $input->questionId;
-							$ebq->SingleLine = $this->getRequest()->getParam('textBoxSize');
-							$ebq->save();
-						} else {
-							// already in there, so update it
-							$q = Doctrine_Query::create()
-								->update('Survey_Model_Essayboxquestion e')
-								->set('e.SingleLine', '?', $this->getRequest()->getParam('textBoxSize'))
-								->where('e.QuestionID = ?', $input->questionId);
-							$q->execute();
-						}
-					} else {
-						throw new Zend_Controller_Action_Exception('Input is invalid');
-					}
-					break;
-				case enums_QuestionCategory::DescriptiveText:
-					// nothing left to do
-					break;
-				case enums_QuestionCategory::MatrixOfChoices:
-	
-					$form = new Survey_Form_MatrixOfChoicesQuestion;
-					
-					if ($form->isValid($this->getRequest()->getPost()))
-					{
-						// is this question ID already in the MatrixOfChoicesQuestion table?
-						$q = Doctrine_Query::create()
-						->from('Survey_Model_Matrixofchoicesquestion s')
-						->where('s.QuestionID = ?', $input->questionId);
-						$mcqs = $q->fetchArray();
-		
-						if (sizeof($mcqs) == 0) {
-							// not in there, so add it
-							$mcq = new Survey_Model_Matrixofchoicesquestion;
-							$mcq->QuestionID = $input->questionId;
-							$mcq->RandomizeAnswers = $this->getRequest()->getParam('randomize');
-							$mcq->save();
-						} else {
-							// already in there, so update it
-							$q = Doctrine_Query::create()
-								->update('Survey_Model_Matrixofchoicesquestion s')
-								->set('s.RandomizeAnswers', '?', $this->getRequest()->getParam('randomize'))
-								->where('s.QuestionID = ?', $input->questionId);
-							$q->execute();
-						}
-						
-						// Update the row choices (these are the child questions of this question)
-						// Delete the old ones and re-add
-						$q = Doctrine_Query::create()
-							->delete('Survey_Model_Question q')
-							->addWhere('q.ParentQuestionID = ?', $input->questionId);
-						$q->execute();
-						
-						// hiddenRowChoices value is comma delimited
-						$rowChoices = $this->getRequest()->getParam('hiddenRowChoices');
-						$i = 1;
-						while (strpos($rowChoices, ',')) {
-							$comma = strpos($rowChoices, ',');
-							$cq = new Survey_Model_Question;
-							$cq->Text = substr($rowChoices, 0, $comma);
-							$cq->SurveyID = $question[0]['SurveyID'];
-							$cq->QuestionIndex = $i++;
-							$cq->CategoryID = enums_QuestionCategory::MatrixOfChoicesChild;
-							$cq->ParentQuestionID = $input->questionId;
-							$cq->RequireAnswer = $input->requireAnswer;
-							
-							$rowChoices = substr($rowChoices, $comma + 1);
-						
-							$cq->save();
+							throw new Zend_Controller_Action_Exception('Input is invalid: ' . print_r($form->getErrors()));
 						}				
-	
 						
-						// Update the column choices (these are the entries in the Selection table for this question)
-						// Delete the old ones and re-add
-						$q = Doctrine_Query::create()
-							->delete('Survey_Model_Selection s')
-							->addWhere('s.QuestionID = ?', $input->questionId);
-						$q->execute();
-						
-						// hiddenColumnChoices value is comma delimited
-						$columnChoices = $this->getRequest()->getParam('hiddenColumnChoices');
-						$i = 1;
-						while (strpos($columnChoices, ',')) {
-							$comma = strpos($columnChoices, ',');
-							$s = new Survey_Model_Selection;
-							$s->SelectionIndex = $i++;
-							$s->Text = substr($columnChoices, 0, $comma);
-							$s->QuestionID = $input->questionId;
-							$columnChoices = substr($columnChoices, $comma + 1);
-						
-							$s->save();
-						}
-					} else {
-						
-						throw new Zend_Controller_Action_Exception('Input is invalid: ' . print_r($form->getErrors()));
-					}				
+						break;
+					default:
+						throw new Zend_Controller_Action_Exception('Currently unable to handle questions of type ' . $questionType);
 					
-					break;
-				default:
-					throw new Zend_Controller_Action_Exception('Currently unable to handle questions of type ' . $questionType);
-				
+					}
+					
+					$conn->commit();
+				} catch (Exception $exc) {
+					$conn->rollback();
+					
+					throw $exc;
 				}
 				
-				$conn->commit();
-			} catch (Exception $exc) {
-				$conn->rollback();
+	
 				
+				// if "Save/Close" was clicked, then close the dialog;
+				// if "Save/Next Question" was clicked, then show user a new dialog
 				if ($input->hiddenCloseDlg == 1) {
-					throw $exc;
+					$this->_redirect('/owner/survey/show/' . $surveyId);
 				} else {
-					echo $exc;
+					$this->_redirect('/owner/question/add?surveyId=' . $surveyId . '&page=' . $question[0]['PageNum'] . '&index=' . ($question[0]['QuestionIndex'] + 1));		
 				}
 			}
-			
-
-			
-			// if "Save/Close" was clicked, then close the dialog;
-			// if "Save/Next Question" was clicked, then show user a new dialog
+		} catch (Exception $e) {
 			if ($input->hiddenCloseDlg == 1) {
-				$this->_redirect('/owner/survey/show/' . $surveyId);
+				throw $e;
 			} else {
-				$this->_redirect('/owner/question/add?surveyId=' . $surveyId . '&page=' . $question[0]['PageNum'] . '&index=' . ($question[0]['QuestionIndex'] + 1));		
+				echo "ERROR: " . $e;
 			}
 		}
 	}

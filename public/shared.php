@@ -22,8 +22,8 @@ function verifyUserMatchesSurvey($surveyId){
 	$q = Doctrine_Query::create()
 	->select('s.*')
 	->from('Survey_Model_Survey s')
-	->where('s.OwnerID = ' . $userId)
-	->addWhere('s.ID = ' . $surveyId);
+	->where('s.OwnerID = ?', $userId)
+	->addWhere('s.ID = ?', $surveyId);
 	$surveys = $q->fetchArray();
 	if (count($surveys) < 1) {
 		throw new Zend_Controller_Action_Exception('User does not have permission to access this survey');
@@ -38,8 +38,8 @@ function verifyUserMatchesQuestion($questionId){
 	->select('q.*, s.OwnerID')
 	->from('Survey_Model_Question q')
 	->leftJoin('q.Survey_Model_Survey s')
-	->where('s.OwnerID = ' . $userId)
-	->addWhere('q.ID = ' . $questionId);
+	->where('s.OwnerID = ?', $userId)
+	->addWhere('q.ID = ?', $questionId);
 	$questions = $q->fetchArray();
 	if (count($questions) < 1) {
 		throw new Zend_Controller_Action_Exception('User does not have permission to access this question');
@@ -56,8 +56,8 @@ function deleteQuestionFromPage($questionId) {
 	->select('q.*, s.OwnerID')
 	->from('Survey_Model_Question q')
 	->leftJoin('q.Survey_Model_Survey s')
-	->where('s.OwnerID = ' . $userId)
-	->addWhere('q.ID = ' . $questionId);
+	->where('s.OwnerID = ?', $userId)
+	->addWhere('q.ID = ?', $questionId);
 	$questions = $q->fetchArray();
 	if (count($questions) < 1) {
 		throw new Zend_Controller_Action_Exception('Deletion failed for some reason, question ID = ' . $questionId . ', user id = ' . $userId);
@@ -162,7 +162,7 @@ function copyQuestion($surveyId, $questionId, $newPage, $newQuestionIndex) {
 			$q = Doctrine_Query::create()
 			->select('q.*')
 			->from('Survey_Model_Essayboxquestion q')
-			->addWhere('q.QuestionID = ' . $questionId);
+			->addWhere('q.QuestionID = ?', $questionId);
 			$questions = $q->fetchArray();
 			if (count($questions) < 1) {
 				throw new Zend_Controller_Action_Exception('Failed to locate question category specific entry in database');
@@ -179,7 +179,7 @@ function copyQuestion($surveyId, $questionId, $newPage, $newQuestionIndex) {
 			$q = Doctrine_Query::create()
 			->select('q.*')
 			->from('Survey_Model_Matrixofchoicesquestion q')
-			->addWhere('q.QuestionID = ' . $questionId);
+			->addWhere('q.QuestionID = ?', $questionId);
 			$questions = $q->fetchArray();
 			if (count($questions) < 1) {
 				throw new Zend_Controller_Action_Exception('Failed to locate question category specific entry in database');
@@ -214,7 +214,7 @@ function copyQuestion($surveyId, $questionId, $newPage, $newQuestionIndex) {
 			$q = Doctrine_Query::create()
 			->select('q.*')
 			->from('Survey_Model_Multiplechoicequestion q')
-			->addWhere('q.QuestionID = ' . $questionId);
+			->addWhere('q.QuestionID = ?', $questionId);
 			$questions = $q->fetchArray();
 			if (count($questions) < 1) {
 				throw new Zend_Controller_Action_Exception('Failed to locate question category specific entry in database');
@@ -272,10 +272,10 @@ function incrementQuestionIndices($surveyId, $userId, $page, $firstIndex) {
 	->select('q.*, s.OwnerID')
 	->from('Survey_Model_Question q')
 	->leftJoin('q.Survey_Model_Survey s')
-	->where('q.SurveyID = ' . $surveyId)
-	->addWhere('q.PageID = ' . $page)
-	->addWhere('s.OwnerID = ' . $userId)
-	->addWhere('q.QuestionIndex >= ' . $firstIndex)
+	->where('q.SurveyID = ?', $surveyId)
+	->addWhere('q.PageID = ?', $page)
+	->addWhere('s.OwnerID = ?', $userId)
+	->addWhere('q.QuestionIndex >= ?', $firstIndex)
 	->addWhere('q.ParentQuestionID IS NULL');
 	$questions = $q->fetchArray();
 
@@ -294,10 +294,10 @@ function decrementQuestionIndices($surveyId, $userId, $page, $firstIndex) {
 	->select('q.*, s.OwnerID')
 	->from('Survey_Model_Question q')
 	->leftJoin('q.Survey_Model_Survey s')
-	->where('q.SurveyID = ' . $surveyId)
-	->addWhere('q.PageID = ' . $page)
-	->addWhere('s.OwnerID = ' . $userId)
-	->addWhere('q.QuestionIndex >= ' . $firstIndex)
+	->where('q.SurveyID = ?', $surveyId)
+	->addWhere('q.PageID = ?', $page)
+	->addWhere('s.OwnerID = ?', $userId)
+	->addWhere('q.QuestionIndex >= ?', $firstIndex)
 	->addWhere('q.ParentQuestionID IS NULL');
 	$questions = $q->fetchArray();
 
