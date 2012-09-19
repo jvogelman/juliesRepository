@@ -425,6 +425,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 				}
 				
 				$surveyId = $question[0]['surveyId'];
+				$origQuestionType = $question[0]['CategoryID'];
 				
 				$questionType = $this->getRequest()->getParam('questionType');
 				$requireAnswer;
@@ -636,8 +637,36 @@ class Owner_QuestionController extends Zend_Controller_Action
 						
 						break;
 					default:
-						throw new Zend_Controller_Action_Exception('Currently unable to handle questions of type ' . $questionType);
+						throw new Zend_Controller_Action_Exception('Currently unable to handle questions of type ' . $questionType);					
+					}
 					
+					// if question type has changed, we might need to clean up old entries in question category specific tables
+					if ($origQuestionType != $questionType) {
+						switch ($origQuestionType) {
+							case enums_QuestionCategory::Undefined:
+								break;
+							case enums_QuestionCategory::CommentEssayBox:
+								$q = Doctrine_Query::create()
+									->delete('Survey_Model_Essayboxquestion e')
+									->addWhere('e.QuestionID = ?', $input->questionId);
+								$q->execute();
+								break;
+							case enums_QuestionCategory::DescriptiveText:
+								break;
+							case enums_QuestionCategory::MatrixOfChoices:
+								$q = Doctrine_Query::create()
+									->delete('Survey_Model_Matrixofchoicesquestion m')
+									->addWhere('m.QuestionID = ?', $input->questionId);
+								$q->execute();
+								break;
+							case enums_QuestionCategory::MultipleChoiceMultipleAnswers:
+							case enums_QuestionCategory::MultipleChoiceOneAnswer:
+								$q = Doctrine_Query::create()
+									->delete('Survey_Model_Multiplechoicequestion m')
+									->addWhere('m.QuestionID = ?', $input->questionId);
+								$q->execute();
+								break;
+						}
 					}
 					
 					$conn->commit();
