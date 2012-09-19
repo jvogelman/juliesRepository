@@ -255,7 +255,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 
 		// get corresponding survey ID 
 		$q = Doctrine_Query::create()
-			->select('q.*, s.ID as surveyId')
+			->select('s.ID as surveyId')
 			->from('Survey_Model_Question q')
 			->leftJoin('q.Survey_Model_Survey s')
 			->addWhere('q.ID = ?', $input->questionId);
@@ -312,7 +312,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 				verifyUserMatchesQuestion($input->questionId);
 				
 				$q = Doctrine_Query::create()
-					->select('q.*, c.Name as CategoryName')
+					->select('q.ID, q.RequireAnswer, c.Name as CategoryName')
 					->from('Survey_Model_Question q')
 					->leftJoin('q.Survey_Model_Questioncategory c')
 					->leftJoin('q.Survey_Model_Survey s')
@@ -414,7 +414,8 @@ class Owner_QuestionController extends Zend_Controller_Action
 				verifyUserMatchesQuestion($input->questionId);
 				
 				$q = Doctrine_Query::create()
-					->select('q.*, s.ID as surveyId, p.PageNum as PageNum')
+					// #### for some reason, I can't specify q.SurveyID here and actually get it (as opposed to s.ID)
+					->select('q.SurveyID, q.CategoryID, q.QuestionIndex, s.ID as surveyId, p.PageNum as PageNum')
 					->from('Survey_Model_Question q')
 					->leftJoin('q.Survey_Model_Survey s')
 					->leftJoin('q.Survey_Model_Page p')
@@ -423,6 +424,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 				if (sizeof($question) == 0) {
 					throw new Zend_Controller_Action_Exception('No Question matches question ID ' . $input->questionId);
 				}
+				
 				
 				$surveyId = $question[0]['surveyId'];
 				$origQuestionType = $question[0]['CategoryID'];
@@ -498,6 +500,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 							
 							// is this question ID already in the MultipleChoiceQuestion table?
 							$q = Doctrine_Query::create()
+								->select('m.QuestionID')
 								->from('Survey_Model_Multiplechoicequestion m')
 								->where('m.QuestionID = ?', $input->questionId);
 							$mcqs = $q->fetchArray();
@@ -532,6 +535,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 						{
 							// is this question ID already in the EssayBoxQuestion table?
 							$q = Doctrine_Query::create()
+								->select('e.QuestionID')
 								->from('Survey_Model_Essayboxquestion e')
 								->where('e.QuestionID = ?', $input->questionId);
 							$ebqs = $q->fetchArray();
@@ -565,6 +569,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 						{
 							// is this question ID already in the MatrixOfChoicesQuestion table?
 							$q = Doctrine_Query::create()
+							->select('s.QuestionID')
 							->from('Survey_Model_Matrixofchoicesquestion s')
 							->where('s.QuestionID = ?', $input->questionId);
 							$mcqs = $q->fetchArray();
@@ -598,7 +603,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 								$comma = strpos($rowChoices, ',');
 								$cq = new Survey_Model_Question;
 								$cq->Text = substr($rowChoices, 0, $comma);
-								$cq->SurveyID = $question[0]['SurveyID'];
+								$cq->SurveyID = $question[0]['surveyId'];
 								$cq->QuestionIndex = $i++;
 								$cq->CategoryID = enums_QuestionCategory::MatrixOfChoicesChild;
 								$cq->ParentQuestionID = $input->questionId;
@@ -722,7 +727,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 		
 		// get the current page/question index
 		$q = Doctrine_Query::create()
-			->select('q.*')
+			->select('q.PageID, q.QuestionIndex')
 			->from('Survey_Model_Question q')
 			->addWhere('q.ID = ' . $input->questionId);
 		$question = $q->fetchArray();

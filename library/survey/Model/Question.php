@@ -15,7 +15,7 @@ class Survey_Model_Question extends Survey_Model_BaseQuestion
 	public function setUp()
 	{
 		$this->hasOne('Survey_Model_Survey', array(
-				'local' => 'surveyID',
+				'local' => 'SurveyID',
 				'foreign' => 'ID'	// not really the foreign key, but the foreign table
 				));
 		

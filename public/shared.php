@@ -20,13 +20,13 @@ function verifyUserMatchesSurvey($surveyId){
 	$userId = getUserId();
 
 	$q = Doctrine_Query::create()
-	->select('s.*')
+	->select('s.ID, s.OwnerID') 
 	->from('Survey_Model_Survey s')
 	->where('s.OwnerID = ?', $userId)
 	->addWhere('s.ID = ?', $surveyId);
 	$surveys = $q->fetchArray();
 	if (count($surveys) < 1) {
-		throw new Zend_Controller_Action_Exception('User does not have permission to access this survey');
+		throw new Zend_Controller_Action_Exception('User does not have permission to access this survey: user = ' . $userId . ', survey ID = ' . $surveyId);
 	}
 }
 
@@ -35,14 +35,15 @@ function verifyUserMatchesQuestion($questionId){
 	$userId = getUserId();
 
 	$q = Doctrine_Query::create()
-	->select('q.*, s.OwnerID')
+	->select('q.ID, q.SurveyID, s.OwnerID') // #### why doesn't this work?
+	//->select('q.*, s.OwnerID')
 	->from('Survey_Model_Question q')
 	->leftJoin('q.Survey_Model_Survey s')
 	->where('s.OwnerID = ?', $userId)
 	->addWhere('q.ID = ?', $questionId);
 	$questions = $q->fetchArray();
 	if (count($questions) < 1) {
-		throw new Zend_Controller_Action_Exception('User does not have permission to access this question');
+		throw new Zend_Controller_Action_Exception('User does not have permission to access this question: user = ' . $userId . ', questionId = ' . $questionId);
 	}
 
 }
@@ -53,7 +54,7 @@ function deleteQuestionFromPage($questionId) {
 	$userId = getUserId();
 
 	$q = Doctrine_Query::create()
-	->select('q.*, s.OwnerID')
+	->select('q.SurveyID, q.QuestionIndex, q.PageID, q.CategoryID, s.OwnerID')
 	->from('Survey_Model_Question q')
 	->leftJoin('q.Survey_Model_Survey s')
 	->where('s.OwnerID = ?', $userId)
@@ -125,6 +126,7 @@ function deleteSelections($questionId) {
 
 function copyQuestion($surveyId, $questionId, $newPage, $newQuestionIndex) {
 
+	$userId = getUserId();
 	verifyUserMatchesQuestion($questionId);
 	
 	// get the current page/question index
@@ -140,6 +142,10 @@ function copyQuestion($surveyId, $questionId, $newPage, $newQuestionIndex) {
 		throw new Zend_Controller_Action_Exception('Cannot copy questions of type "Matrix Of Choices Child"');
 	}
 	
+	// #### temporary:
+	$myFile = "copyQuestion.txt";
+	$fh = fopen($myFile, 'w');
+	fwrite($fh, 'surveyId = ' . $surveyId . ', userId = ' . $userId . ', newPage = ' . $newPage . ', newQuestionIndex = ' . $newQuestionIndex);
 	
 	// in the new page, update the indices for any questions that follow
 	incrementQuestionIndices($surveyId, $userId, $newPage, $newQuestionIndex);

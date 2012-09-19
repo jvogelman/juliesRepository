@@ -15,8 +15,8 @@ class Survey_Model_Survey extends Survey_Model_BaseSurvey
 	public function setUp()
 	{
 		$this->hasMany('Survey_Model_Question', array(
-				'local' => 'ID',
-				'foreign' => 'QuestionID'
+				'local' => 'SurveyID',
+				'foreign' => 'ID'
 				));
 
 
