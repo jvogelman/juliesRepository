@@ -35,7 +35,7 @@ function verifyUserMatchesQuestion($questionId){
 	$userId = getUserId();
 
 	$q = Doctrine_Query::create()
-	->select('q.ID, q.SurveyID, s.OwnerID') // #### why doesn't this work?
+	->select('q.ID, q.SurveyID, s.OwnerID') 
 	//->select('q.*, s.OwnerID')
 	->from('Survey_Model_Question q')
 	->leftJoin('q.Survey_Model_Survey s')
@@ -275,7 +275,7 @@ function getPageAtIndex($surveyId, $pageIndex) {
 function incrementQuestionIndices($surveyId, $userId, $page, $firstIndex) {
 
 	$q = Doctrine_Query::create()
-	->select('q.*, s.OwnerID')
+	->select('q.ID, q.QuestionIndex, s.OwnerID')
 	->from('Survey_Model_Question q')
 	->leftJoin('q.Survey_Model_Survey s')
 	->where('q.SurveyID = ?', $surveyId)
@@ -297,7 +297,7 @@ function incrementQuestionIndices($surveyId, $userId, $page, $firstIndex) {
 
 function decrementQuestionIndices($surveyId, $userId, $page, $firstIndex) {
 	$q = Doctrine_Query::create()
-	->select('q.*, s.OwnerID')
+	->select('q.ID, q.QuestionIndex, s.OwnerID')
 	->from('Survey_Model_Question q')
 	->leftJoin('q.Survey_Model_Survey s')
 	->where('q.SurveyID = ?', $surveyId)

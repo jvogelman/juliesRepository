@@ -247,7 +247,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 		
 			// delete all of the questions on this page
 			$q = Doctrine_Query::create()
-			->select('q.*, s.ID as surveyId')
+			->select('q.ID')
 			->from('Survey_Model_Question q')
 			->leftJoin('q.Survey_Model_Survey s')
 			->where('s.ID = ?', $input->surveyId)
@@ -353,7 +353,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 			
 			// get the questions on the original page so they can be copied later
 			$q = Doctrine_Query::create()
-				->select('q.*, s.ID as surveyId')
+				->select('q.ID, q.QuestionIndex')
 				->from('Survey_Model_Question q')
 				->leftJoin('q.Survey_Model_Survey s')
 				->where('s.ID = ?', $input->surveyId)
@@ -481,7 +481,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 	private function incrementNumPageNumsInSurvey($surveyId) {
 		// update the number of pages in the survey
 		$q = Doctrine_Query::create()
-			->select('s.*')
+			->select('s.NumPages')
 			->from('Survey_Model_Survey s')
 			->where('s.ID = ?', $surveyId);
 		$surveys = $q->fetchArray();
@@ -499,7 +499,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 	private function decrementNumPageNumsInSurvey($surveyId) {
 		// update the number of pages in the survey
 		$q = Doctrine_Query::create()
-			->select('s.*')
+			->select('s.NumPages')
 			->from('Survey_Model_Survey s')
 			->where('s.ID = ?', $surveyId);
 		$surveys = $q->fetchArray();
