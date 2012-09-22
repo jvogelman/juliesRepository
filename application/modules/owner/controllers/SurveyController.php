@@ -449,6 +449,85 @@ class Owner_SurveyController extends Zend_Controller_Action
 		echo $pageName;
 	}
 	
+	function dividepageAction() {
+		$this->_helper->viewRenderer->setNoRender();
+		$this->_helper->getHelper('layout')->disableLayout();
+		
+		session_start();
+		
+		$validators = array(
+				'surveyId' => array('NotEmpty', 'Int'),
+				'pageIndex' => array('NotEmpty', 'Int'),
+				'questionIndex' => array('NotEmpty', 'Int')
+		);
+		
+		$filters = array(
+				'surveyId' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+				'pageIndex' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+				'questionIndex' => array('HtmlEntities', 'StripTags', 'StringTrim')
+		);
+		
+		$input = new Zend_Filter_Input($filters, $validators);
+		$input->setData($this->getRequest()->getParams());
+			
+			
+		if ($input->isValid())	{
+			verifyUserMatchesSurvey($input->surveyId);
+			
+
+			$conn = Doctrine_Manager::connection();
+			$conn->beginTransaction();
+			try
+			{
+				// update the page indices to allow for the new page
+				$this->incrementPageNums($input->surveyId, $input->pageIndex + 1);
+				$this->incrementNumPageNumsInSurvey($input->surveyId);
+				
+				////////////////////////////////////////////////////////////////////////////////////////////////
+				// create a new page and reset the last questions on the original page to it
+				////////////////////////////////////////////////////////////////////////////////////////////////
+				
+				// create the page
+				$page = new Survey_Model_Page;
+				$page->PageNum = $input->pageIndex + 1;
+				$page->SurveyID = $input->surveyId;
+				$page->save();
+				
+				// get the questions that need to be moved
+				$pageId = getPageAtIndex($input->surveyId, $input->pageIndex);
+				
+				
+				$q = Doctrine_Query::create()
+					->select('q.ID')
+					->from('Survey_Model_Question q')
+					->where('q.SurveyID = ?', $input->surveyId)
+					->addWhere('q.PageID = ?', $pageId)
+					->addWhere('q.QuestionIndex >= ?', $input->questionIndex)
+					->orderBy('q.QuestionIndex');
+				$questions = $q->fetchArray();
+				
+				// move the questions to the new page
+				$newIndex = 1;
+				foreach ($questions as $question) {
+					$q = Doctrine_Query::create()
+						->update('Survey_Model_Question q')
+						->set('q.PageID', '?', $page['ID'])
+						->set('q.QuestionIndex', '?', $newIndex)
+						->where('q.ID = ?', $question['ID']);
+					$q->execute();
+					$newIndex++;
+				}
+			
+				$conn->commit();
+			} catch (Exception $exc) {
+				$conn->rollback();
+				throw $exc;
+			}
+
+			$this->_redirect('/owner/survey/show/' . $input->surveyId);
+		}
+	}
+	
 	// for each page starting with $firstPage, increment its PageNum
 	private function incrementPageNums($surveyId, $firstPage) {
 

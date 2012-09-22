@@ -699,6 +699,13 @@ function EditQDialog() {
 			});
 		}
 
+		$('.dividePageButton').click(function() {
+            var surveyId = $('#SurveyId').val();
+			var page = $(this).siblings('.page')[0].value;
+			var questionIndex = $(this).siblings('.newQuestionIndex')[0].value;
+            window.location = '/owner/survey/dividepage/' + surveyId + '/' + page + '/' + questionIndex;
+		});
+
 		$('.questionAddButton').click(function() {
             var surveyId = $('#SurveyId').val();
 			var page = $(this).siblings('.page')[0];
@@ -1048,7 +1055,7 @@ for ($i = 1; $i <= $survey['NumPages']; $i++): // go through the pages
 			<input type='hidden' class='page' value='<?php echo $i; ?>'></input>
 			<input type='hidden' class='newQuestionIndex' value='<?php echo $question['QuestionIndex'] + 1; ?>'></input>
 			<?php if ($j < count($page)) {
-				echo '<button>Divide Page Here</button>';
+				echo '<button class="dividePageButton">Divide Page Here</button>';
 			} ?>
 		</p>
 	
