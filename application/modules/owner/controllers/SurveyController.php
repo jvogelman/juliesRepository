@@ -404,6 +404,11 @@ class Owner_SurveyController extends Zend_Controller_Action
 	}
 	
 	function editpagenameAction() {
+		
+
+		$this->_helper->viewRenderer->setNoRender();
+		$this->_helper->getHelper('layout')->disableLayout();
+		
 		session_start();
 		
 		$validators = array(
@@ -429,11 +434,9 @@ class Owner_SurveyController extends Zend_Controller_Action
 		
 		if (strlen($pageName) >= 6 && substr($pageName, 0, 6) == '&quot;') {
 			$pageName = substr($pageName, 6); // 6 = length of '&quot;'
-			fwrite($fh, "compare a successful: " . $pageName);
 		}
 		if (strlen($pageName) >= 6 && substr($pageName, strlen($pageName) - 6, 6) == '&quot;') {
 			$pageName = substr($pageName, 0, strlen($pageName) - 6);
-			fwrite($fh, "compare b successful: " . $pageName);
 		}
 		
 		$q = Doctrine_Query::create()
@@ -443,7 +446,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 			->addWhere('p.SurveyID = ?', $input->surveyId);
 		$q->execute();
 
-		$this->_redirect('/owner/survey/show/' . $input->surveyId);
+		echo $pageName;
 	}
 	
 	// for each page starting with $firstPage, increment its PageNum

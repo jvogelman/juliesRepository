@@ -593,12 +593,22 @@ function EditQDialog() {
             }
 
             promptDialog._pageIndex = $(this).siblings('.page')[0].value;
+            PromptDialog.prototype._PageName = $(this).siblings('.pageName')[0];
                 
 			promptDialog.open('What would you like to set the name to?', currentName, 
 				function() {
 		            var surveyId = $('#SurveyId').val();		            
 		            var pageName = $('#promptTextField').val();
-					window.location = '/owner/survey/editpagename/' + surveyId + '/' + promptDialog._pageIndex + '/"' + pageName + '"';
+					//window.location = '/owner/survey/editpagename/' + surveyId + '/' + promptDialog._pageIndex + '/"' + pageName + '"';
+					$.get('/owner/survey/editpagename/' + surveyId + '/' + promptDialog._pageIndex + '/"' + pageName + '"', {},
+						function (response) {
+                        
+                       	if (response.substr(0,5) == "ERROR") {
+                           	alert("Error: " + response.substr(6));
+                        } else {
+                        	PromptDialog.prototype._PageName.innerHTML = response;                        }
+                    }
+              );
 				}
 			);
         });
