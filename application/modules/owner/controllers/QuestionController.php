@@ -240,11 +240,13 @@ class Owner_QuestionController extends Zend_Controller_Action
 		session_start();
 		
 		$validators = array(
-				'questionId' => array('NotEmpty', 'Int')
+				'questionId' => array('NotEmpty', 'Int'),
+				'refreshPage' => array('NotEmpty', array('Between', 0, 1) )
 		);
 			
 		$filters = array(
-				'questionId' => array('HtmlEntities', 'StripTags', 'StringTrim')
+				'questionId' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+				'refreshPage' => array('HtmlEntities', 'StripTags', 'StringTrim')
 		);
 			
 		$input = new Zend_Filter_Input($filters, $validators);
@@ -272,8 +274,10 @@ class Owner_QuestionController extends Zend_Controller_Action
 			$conn->rollback();
 			throw $exc;
 		}
-				
-		$this->_redirect('/owner/survey/show/' . $surveyId);
+
+		if ($input->refreshPage == 1) {
+			$this->_redirect('/owner/survey/show/' . $surveyId);
+		}
 	}
 	
 	public function shownewcategoryAction() {

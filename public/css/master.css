@@ -64,8 +64,8 @@ body a:hover {
 #menu a {
   color: white;
   font-size: 12pt;
-  border: solid 4px white;
-  padding: 4px;
+  /*border: solid 4px white;*/
+  /*padding: 4px;*/
   margin-left: 10px;
   margin-right: 10px;
 }
@@ -73,15 +73,15 @@ body a:hover {
 #menu a:hover {
   color: red;
   font-size: 12pt;
-  border: solid 4px red;
+  /*border: solid 4px red;*/
   text-decoration: none;
 }
 
 
 #content {
   min-height: 400px;  
-  padding-left: 50px;
-  padding-right: 50px;
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 #footer {

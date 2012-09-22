@@ -487,7 +487,7 @@ function EditQDialog() {
 		
     	$('#cancel').click( function() {
     		var questionId = $('#hiddenQuestionId').val();
-    		window.location = '/owner/question/delete/' + questionId;	
+    		$.get('/owner/question/delete/' + questionId + '/0');	
     	});
 
     	setDialogPositionAndSize();
@@ -667,7 +667,7 @@ function EditQDialog() {
 			var sib = $(this).siblings('.questionId')[0];
 			var questionId = $(sib).val();
 			if (confirm('Are you sure you want to delete this question?')) {
-	            window.location = '/owner/question/delete/' + questionId;			
+	            window.location = '/owner/question/delete/' + questionId + '/1';			
 			}
 		});
 
@@ -845,12 +845,12 @@ for ($i = 1; $i <= $survey['NumPages']; $i++): // go through the pages
 		<div class="QuestionDiv">
 		<table class='QuestionHeaderTable'>
 			<tr>
-				<td width='80%'>Question Type: <?php echo $question["CategoryName"]; ?><br></td>
-				<td width='20%'>
-					<button class='questionEditButton'>Edit</button>
-					<button class='questionDeleteButton'>Delete</button> 
-					<button class='questionMoveButton'>Move</button>
-					<button class='questionCopyButton'>Copy</button>
+				<td>Question Type: <?php echo $question["CategoryName"]; ?><br></td>
+				<td>
+					<button class='questionEditButton' style='float:right'>Edit</button>
+					<button class='questionDeleteButton' style='float:right'>Delete</button> 
+					<button class='questionMoveButton' style='float:right'>Move</button>
+					<button class='questionCopyButton' style='float:right'>Copy</button>
 					<input type='hidden' class='questionId' value='<?php echo $question["ID"]; ?>' />
 				</td>
 			</tr>

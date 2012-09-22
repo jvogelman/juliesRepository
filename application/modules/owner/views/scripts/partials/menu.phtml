@@ -1,0 +1,23 @@
+
+
+<style type="text/css">
+
+#menu {
+	background-color:black;
+	color:white;
+	padding:5px;
+}
+
+</style>
+
+<p>Study: 
+<?php
+echo $this->studyName;
+?>
+</p>
+&nbsp;&nbsp;&nbsp;<a>Select Participants</a><br><br>
+Surveys:<br>
+<?php foreach ($this->surveyNames as $surveyName) {
+	echo '&nbsp;&nbsp;&nbsp;<a>' . $surveyName . '</a><br>';
+}
+?>

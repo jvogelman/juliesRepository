@@ -103,6 +103,12 @@ class Owner_SurveyController extends Zend_Controller_Action
 				$pages[$page['PageNum']] = $page['Name'];
 			}
 
+
+			$this->view->studyName = 'Best Study in the World';
+			$this->view->surveyNames = array();
+			$this->view->surveyNames[] = 'Favorite Color';
+			$this->view->surveyNames[] = 'Depression and Anxiety';
+			
 			$this->view->questions = $quest;
 			$this->view->selections = $selections;
 			$this->view->childQuestions = $childQuestions;

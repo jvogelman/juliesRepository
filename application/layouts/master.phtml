@@ -19,8 +19,14 @@
 			<td class="navPanelLabel" id="logInOut">Log In</td>
 		</tr></table>
 	    </div>
-    	<div id="content">
-      		<?php echo $this->layout()->content ?>
+	    <div'>
+	    	<table style='width:90%'><tr>
+	    		<td width='200px' id='menu'><?php echo $this->partial('partials/menu.phtml', 
+                            array('studyName' => $this->studyName,
+                            	'surveyNames' => $this->surveyNames)); ?>
+                </td>
+      			<td><div id="content"><?php echo $this->layout()->content ?></div> </td>
+      		</tr></table>
     	</div> 
   	</body>
  </html>
