@@ -545,6 +545,18 @@ function EditQDialog() {
         	// clear the cookie
         	$.cookie('scrollToPos', null);
         }
+        else if ($.cookie('scrollToPageIndex') != null && $.cookie('scrollToQuestionIndex') != null) {
+            var pageIndex = $.cookie('scrollToPageIndex');
+            var questionIndex = $.cookie('scrollToQuestionIndex');
+            var question = $('.page[value=' + pageIndex + ']').closest('.PageDiv').find('.questionItemIndex[value=' + questionIndex + ']');
+			if (question.length > 0) {
+				var pos = $(question).closest('.QuestionDiv').offset().top;
+				$('html, body').animate({scrollTop:pos}, 'fast');
+				// clear the cookies
+				$.cookie('scrollToPageIndex', null); 
+				$.cookie('scrollToQuestionIndex', null); 
+			}
+        }
         else {
         	$('html, body').animate({scrollTop:0}, 'fast');
         }
@@ -634,7 +646,9 @@ function EditQDialog() {
 
 			// place a "Move Here" (or "Copy Here") button and a "Cancel Move" (or "Cancel Copy") button adjacent to each "Add Page" button
 			$('button').attr('disabled', 'true').css({ opacity: 0.5 });
-			$('<button class="moveHere">' + actionString + ' Here</button><button class="cancelMove">Cancel ' + actionString + '</button><input type="hidden" class="hiddenPageToMove" value="' + page + '" />')
+			$('<button class="moveHere">' + actionString + ' Here</button><button class="cancelMove">Cancel ' + actionString + '</button>' +
+					'<input type="hidden" class="move" value="' + move + '" />' +
+					'<input type="hidden" class="hiddenPageToMove" value="' + page + '" />')
 				.insertBefore($('.pageAddButton'));
 
 			$('.cancelMove').click(function() {
@@ -647,15 +661,30 @@ function EditQDialog() {
 
 			$('.moveHere').click(function() {
 	            var surveyId = $('#SurveyId').val();
-	            var page = $(this).siblings('.hiddenPageToMove')[0];
+	            var move = $(this).siblings('.move')[0].value;
+	            var origPageIndex = $(this).siblings('.hiddenPageToMove')[0];
 				var newPageIndex = $(this).siblings('.page')[0];
-				
+
+				// reenable all the buttons
 				$('button').removeAttr('disabled').css({ opacity: 1 });
+				// remove the temporary Copy and Move buttons
 				$('.moveHere').fadeOut('slow');
 				$('.cancelMove').fadeOut('slow');
 				$('.hiddenPageToMove').remove();
 
-				window.location = url + surveyId + '/' + page.value + '/' + newPageIndex.value;
+
+				// add cookies to remember the page number so that when the page reloads, we can automatically scroll to that location
+				
+				// special exception: if we are moving a page from a smaller index to a larger index, then the "actual" newPageIndex
+				// is one less
+				if (move == 'true' && origPageIndex.value < newPageIndex.value) {
+					$.cookie('scrollToPageIndex', newPageIndex.value - 1);
+				} else {					
+					$.cookie('scrollToPageIndex', newPageIndex.value);
+				}
+				$.cookie('scrollToQuestionIndex', 1);
+				
+				window.location = url + surveyId + '/' + origPageIndex.value + '/' + newPageIndex.value;
 	            
 			});
 		}
@@ -738,7 +767,9 @@ function EditQDialog() {
 			// ### in the future, should we not put ones directly adjacent to this question? or is it good to put them there
 			// because we know the user will see them there?
 			$('button').attr('disabled', 'true').css({ opacity: 0.5 });
-			$('<button class="moveHere">' + actionString + ' Here</button><button class="cancelMove">Cancel ' + actionString + '</button><input type="hidden" class="hiddenQuestionIdToMove" value="' + questionId + '" />')
+			$('<button class="moveHere">' + actionString + ' Here</button><button class="cancelMove">Cancel ' + actionString + '</button>' +
+					'<input type="hidden" class="move" value="' + move + '" />' +
+					'<input type="hidden" class="hiddenQuestionIdToMove" value="' + questionId + '" />')
 				.insertBefore($('.questionAddButton'));
 
 			$('.cancelMove').click(function() {
@@ -752,15 +783,30 @@ function EditQDialog() {
 			$('.moveHere').click(function() {
 	            var surveyId = $('#SurveyId').val();
 	            var questionId = $(this).siblings('.hiddenQuestionIdToMove')[0];
-				var page = $(this).siblings('.page')[0];
-				var newQuestionIndex = $(this).siblings('.newQuestionIndex')[0];
+				var origPageIndex = $('.questionId[value=' + questionId.value + ']').closest('.PageDiv').find('.page')[0].value;
+				var origQuestionIndex = $('.questionId[value=' + questionId.value + ']').next('.questionItemIndex')[0].value;
+	            
+				var newPageIndex = $(this).siblings('.page')[0].value;
+				var newQuestionIndex = $(this).siblings('.newQuestionIndex')[0].value;
+
+				var move = $(this).siblings('.move')[0].value;
 				
 				$('button').removeAttr('disabled').css({ opacity: 1 });
 				$('.moveHere').fadeOut('slow');
 				$('.cancelMove').fadeOut('slow');
 				$('.hiddenQuestionIdToMove').remove();
 
-				window.location = url + surveyId + '/' + questionId.value + '/' + page.value + '/' + newQuestionIndex.value;
+				// add cookies to remember the page number and new question index so that when the page reloads, we can automatically scroll to that location
+				$.cookie('scrollToPageIndex', newPageIndex);
+				$.cookie('scrollToQuestionIndex', newQuestionIndex);
+
+				// special exception: if we are moving a question from a smaller index to a larger index within the same page, then the "actual" newQuestionIndex
+				// is one less
+				if (move == 'true' && origPageIndex == newPageIndex && origQuestionIndex < newQuestionIndex) {
+					$.cookie('scrollToQuestionIndex', newQuestionIndex - 1);
+				}
+
+				window.location = url + surveyId + '/' + questionId.value + '/' + newPageIndex + '/' + newQuestionIndex;
 	            
 			});
 		}
@@ -892,6 +938,7 @@ for ($i = 1; $i <= $survey['NumPages']; $i++): // go through the pages
 					<button class='questionMoveButton' style='float:right'>Move</button>
 					<button class='questionCopyButton' style='float:right'>Copy</button>
 					<input type='hidden' class='questionId' value='<?php echo $question["ID"]; ?>' />
+					<input type='hidden' class='questionItemIndex' value='<?php echo $j;?>' />
 				</td>
 			</tr>
 		</table>

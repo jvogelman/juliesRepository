@@ -1,1 +1,1 @@
-surveyId = 1, userId = 1, newPage = 5, newQuestionIndex = 3
+surveyId = 1, userId = 1, newPage = 7, newQuestionIndex = 1
