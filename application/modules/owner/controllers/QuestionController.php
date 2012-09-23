@@ -41,8 +41,11 @@ class Owner_QuestionController extends Zend_Controller_Action
 				verifyUserMatchesQuestion($input->questionId);
 				
 				$q = Doctrine_Query::create()
-					->select('q.*, m.AddOtherField as AddOtherField, m.SingleLine as mSingleLine, e.SingleLine as eSingleLine, 
-							mat.RandomizeAnswers as RandomizeAnswers, c.Name as CategoryName')
+					->select('q.*, 
+							m.AddOtherField as AddOtherField, m.SingleLine as mSingleLine, m.MultipleSelections as MultipleSelections,
+							e.SingleLine as eSingleLine, 
+							mat.RandomizeAnswers as RandomizeAnswers, 
+							c.Name as CategoryName')
 					->from('Survey_Model_Question q')
 					->leftJoin('q.Survey_Model_Questioncategory c')
 					->leftJoin('q.Survey_Model_Survey s')
@@ -64,8 +67,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 							$form->setQuestionId($question[0]['ID']);
 							
 							break;
-						case enums_QuestionCategory::MultipleChoiceOneAnswer:
-						case enums_QuestionCategory::MultipleChoiceMultipleAnswers:
+						case enums_QuestionCategory::MultipleChoice:
 							$form = new Survey_Form_MultipleChoiceQuestion;
 							
 							$form->setQuestionId($question[0]['ID']);
@@ -77,6 +79,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 							$form->setRequireAnswer($question[0]['RequireAnswer']);
 							
 							$form->setOtherField($question[0]['AddOtherField'], $question[0]['mSingleLine']);
+							$form->setMultipleSelections($question[0]['MultipleSelections']);
 							
 							// get the selections that correspond to this question and add those to the form
 							$s = Doctrine_Query::create()
@@ -335,8 +338,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 						case enums_QuestionCategory::Undefined:
 							$form = new Survey_Form_UndefinedCategoryQuestion;
 							break;
-						case enums_QuestionCategory::MultipleChoiceOneAnswer:
-						case enums_QuestionCategory::MultipleChoiceMultipleAnswers:							
+						case enums_QuestionCategory::MultipleChoice:						
 							$form = new Survey_Form_MultipleChoiceQuestion;
 							break;
 						case enums_QuestionCategory::CommentEssayBox:
@@ -456,8 +458,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 				
 	
 					switch ($questionType) {
-					case enums_QuestionCategory::MultipleChoiceOneAnswer:
-					case enums_QuestionCategory::MultipleChoiceMultipleAnswers:			
+					case enums_QuestionCategory::MultipleChoice:		
 		
 						$form = new Survey_Form_MultipleChoiceQuestion;
 						
@@ -502,6 +503,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 								$otherFieldSize = $this->getRequest()->getParam('otherFieldSize');
 							}
 							
+							
 							// is this question ID already in the MultipleChoiceQuestion table?
 							$q = Doctrine_Query::create()
 								->select('m.QuestionID')
@@ -524,6 +526,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 									->update('Survey_Model_Multiplechoicequestion m')
 									->set('m.AddOtherField', '?', $this->getRequest()->getParam('otherField'))
 									->set('m.SingleLine' ,'?', $otherFieldSize)
+									->set('m.MultipleSelections', '?', $this->getRequest()->getParam('multipleSelections'))
 									->where('m.QuestionID = ?', $input->questionId);
 								$q->execute();
 							}
@@ -668,8 +671,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 									->addWhere('m.QuestionID = ?', $input->questionId);
 								$q->execute();
 								break;
-							case enums_QuestionCategory::MultipleChoiceMultipleAnswers:
-							case enums_QuestionCategory::MultipleChoiceOneAnswer:
+							case enums_QuestionCategory::MultipleChoice:
 								$q = Doctrine_Query::create()
 									->delete('Survey_Model_Multiplechoicequestion m')
 									->addWhere('m.QuestionID = ?', $input->questionId);

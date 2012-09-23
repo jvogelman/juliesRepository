@@ -7,12 +7,11 @@ require_once 'enums.php';
 <script type="text/javascript">
 
 QuestionCategory = {
-	MultipleChoiceOneAnswer : 1,
-	MultipleChoiceMultipleAnswers : 2,
-	CommentEssayBox : 3,
-	DescriptiveText : 4,
-	MatrixOfChoices : 5,
-	MatrixOfChoicesChild : 6,
+	MultipleChoice : 1,
+	CommentEssayBox : 2,
+	DescriptiveText : 3,
+	MatrixOfChoices : 4,
+	MatrixOfChoicesChild : 5,
 	Undefined : 999
 }
 
@@ -213,8 +212,7 @@ function EditQDialog() {
 		$('#cancel').unbind('click');
 
 		switch (_type) { 
-		case QuestionCategory.MultipleChoiceOneAnswer:
-		case QuestionCategory.MultipleChoiceMultipleAnswers:
+		case QuestionCategory.MultipleChoice:
 			unbindMultipleChoice();
 			break;
 		case QuestionCategory.CommentEssayBox:
@@ -457,8 +455,7 @@ function EditQDialog() {
 		// add callbacks here
 		_type = parseInt($('#questionType').val());
 		switch(_type) {
-		case QuestionCategory.MultipleChoiceOneAnswer:
-		case QuestionCategory.MultipleChoiceMultipleAnswers:
+		case QuestionCategory.MultipleChoice:
 			setupMultipleChoice();
 			break;
 		case QuestionCategory.CommentEssayBox:
@@ -980,20 +977,24 @@ for ($i = 1; $i <= $survey['NumPages']; $i++): // go through the pages
 							$questionIndex++;
 							echo "<b><font color='red'>Need to define this question!</font></b>\n";
 							break;
-						case enums_QuestionCategory::MultipleChoiceOneAnswer:	
+						case enums_QuestionCategory::MultipleChoice:	
 							for ($k = 0; $k < count($select); $k++):
 								$s = $select[$k];
-								echo "<input type=\"radio\" name=\"QuestionID_" . $question["ID"] . "\" value=\"" . $k . "\">" . html_entity_decode($s["Text"]) . "</input><br>";
+								if ($question["MultipleSelections"]) {
+									echo "<input type=\"checkbox\" name=\"QuestionID_" . $question["ID"] . "_" . $k  . "\" value=\"" . $k . "\" selection=\"multiple\">" . html_entity_decode($s["Text"]) . "</input><br>";
+								} else {
+									echo "<input type=\"radio\" name=\"QuestionID_" . $question["ID"] . "\" value=\"" . $k . "\">" . html_entity_decode($s["Text"]) . "</input><br>";
+								}
 							endfor;
 							$questionIndex++;
 							break;
-						case enums_QuestionCategory::MultipleChoiceMultipleAnswers: 
+						/*case enums_QuestionCategory::MultipleChoiceMultipleAnswers: 
 							for ($k = 0; $k < count($select); $k++):
 								$s = $select[$k];
 								echo "<input type=\"checkbox\" name=\"QuestionID_" . $question["ID"] . "_" . $k  . "\" value=\"" . $k . "\" selection=\"multiple\">" . html_entity_decode($s["Text"]) . "</input><br>";
 							endfor;
 							$questionIndex++;
-							break;	
+							break;*/	
 						case enums_QuestionCategory::CommentEssayBox:
 							if ($question["SingleLine"]) {
 								echo "<input type='text' size='70'/>";

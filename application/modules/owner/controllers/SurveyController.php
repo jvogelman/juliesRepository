@@ -46,12 +46,14 @@ class Owner_SurveyController extends Zend_Controller_Action
 			
 			// get the questions for this survey
 			$q = Doctrine_Query::create()
-      			->select('q.*, p.PageNum as PageNum, c.Name as CategoryName, e.SingleLine as SingleLine')
+      			->select('q.*, p.PageNum as PageNum, c.Name as CategoryName, e.SingleLine as SingleLine, 
+      					m.MultipleSelections as MultipleSelections, m.AddOtherField as AddOtherField, m.SingleLine as mSingleLine')
 				->from('Survey_Model_Question q')
 				->where('q.SurveyID = ?', $surveyId)
 				->leftJoin('q.Survey_Model_Page p')
 				->leftJoin('q.Survey_Model_Questioncategory c')
-				->leftJoin('q.Survey_Model_Essayboxquestion e');
+				->leftJoin('q.Survey_Model_Essayboxquestion e')
+				->leftJoin('q.Survey_Model_Multiplechoicequestion m');
 			$result = $q->fetchArray();
 			$questions = $result;
 			

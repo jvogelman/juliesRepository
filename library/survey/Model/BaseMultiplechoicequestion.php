@@ -49,6 +49,16 @@ abstract class Survey_Model_BaseMultiplechoicequestion extends Doctrine_Record
              'notnull' => true,
              'autoincrement' => false,
              ));
+        $this->hasColumn('MultipleSelections', 'integer', 1, array(
+             'type' => 'integer',
+             'length' => 1,
+             'fixed' => false,
+             'unsigned' => false,
+             'primary' => false,
+             'default' => '0',
+             'notnull' => true,
+             'autoincrement' => false,
+             ));
     }
 
     public function setUp()

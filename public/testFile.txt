@@ -1,21 +1,43 @@
-<form enctype="application/x-www-form-urlencoded" action="owner/question/save/4" method="post">
+<form enctype="application/x-www-form-urlencoded" action="owner/question/save/2" method="post">
 
-<input type="hidden" name="hiddenQuestionId" value="4" class="hidden" id="hiddenQuestionId">
+<input type="hidden" name="hiddenQuestionId" value="2" class="hidden" id="hiddenQuestionId">
 
 <input type="hidden" name="hiddenCloseDlg" value="" class="hidden" id="hiddenCloseDlg">
-<p><label for="question" class="formLabel required">Text:</label>
+<p><label for="question" class="formLabel required">Question Description:</label>
 
-<textarea name="question" id="question" class="zendFormElement" rows="12" cols="70">a bit of descriptive text</textarea></p>
+<textarea name="question" id="question" class="zendFormElement" rows="3" cols="50">Is it green?</textarea></p>
 <p><label for="questionType" class="formLabel optional">Question Type:</label>
 
 <select name="questionType" id="questionType" class="zendFormElement">
     <option value="-1" label=""></option>
-    <option value="1" label="Multiple Choice - one answer">Multiple Choice - one answer</option>
-    <option value="2" label="Multiple Choice - multiple answers">Multiple Choice - multiple answers</option>
-    <option value="3" label="Comment/Essay Box">Comment/Essay Box</option>
-    <option value="4" label="Descriptive Text" selected="selected">Descriptive Text</option>
-    <option value="5" label="Matrix of Choices">Matrix of Choices</option>
+    <option value="1" label="Multiple Choice" selected="selected">Multiple Choice</option>
+    <option value="2" label="Comment/Essay Box">Comment/Essay Box</option>
+    <option value="3" label="Descriptive Text">Descriptive Text</option>
+    <option value="4" label="Matrix of Choices">Matrix of Choices</option>
 </select></p>
+<p>
+<input type="hidden" name="requireAnswer" value="0"><input type="checkbox" name="requireAnswer" id="requireAnswer" value="1" checked="checked" class="zendFormElement">
+<label for="requireAnswer" class="formLabel optional">Require an answer to this question</label></p>
+<p>
+<input type="hidden" name="multipleSelections" value="0"><input type="checkbox" name="multipleSelections" id="multipleSelections" value="1" checked="checked" class="zendFormElement">
+<label for="multipleSelections" class="formLabel optional">Enable multiple selections</label></p>
+<dt id="selection-label">&#160;</dt><dd id="selection-element"><fieldset id="fieldset-selection"><dl>
+<p><label for="selection-1" class="formLabel optional">a.</label>
+
+<textarea name="selection[1]" id="selection-1" rows="3" cols="70" class="selection zendFormElement">It is not green</textarea></p>
+<p><label for="selection-2" class="formLabel optional">b.</label>
+
+<textarea name="selection[2]" id="selection-2" rows="3" cols="70" class="selection zendFormElement">It is green</textarea></p></dl></fieldset></dd>
+<dt id="otherFieldGroup-label">&#160;</dt><dd id="otherFieldGroup-element"><fieldset id="fieldset-otherFieldGroup"><dl>
+<p>
+<input type="hidden" name="otherField" value="0"><input type="checkbox" name="otherField" id="otherField" value="1" checked="checked" class="zendFormElement">
+<label for="otherField" class="formLabel optional">Add &quot;Other&quot; field to selections above</label></p>
+<p><label for="otherFieldSize" class="formLabel optional">Size of Field</label>
+
+<select name="otherFieldSize" id="otherFieldSize" class="zendFormElement">
+    <option value="0" label="Text area">Text area</option>
+    <option value="1" label="Single Line of Text" selected="selected">Single Line of Text</option>
+</select></p></dl></fieldset></dd>
 
 <input type="submit" name="save" id="save" value="Save/Close">
 

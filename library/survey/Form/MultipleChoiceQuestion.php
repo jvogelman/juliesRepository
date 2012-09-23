@@ -16,6 +16,12 @@ class Survey_Form_MultipleChoiceQuestion extends Survey_Form_QuestionEdit
 	public function addQuestionCategorySpecificElements(){
 
 		$subForm = new Zend_Form_SubForm();
+			
+		$this->multipleSelections = new Zend_Form_Element_Checkbox('multipleSelections');
+		$this->multipleSelections->setLabel('Enable multiple selections')
+			->setDecorators($this->checkboxDecorators)
+			->setOptions(array(
+				'class' => 'zendFormElement'));
 
 		$this->otherField = new Zend_Form_Element_Checkbox('otherField');
 		$this->otherField->setLabel('Add "Other" field to selections above')
@@ -33,6 +39,7 @@ class Survey_Form_MultipleChoiceQuestion extends Survey_Form_QuestionEdit
 				'class' => 'zendFormElement'));
 		
 		$this->addSubForm($subForm, 'selection')
+			->addElement($this->multipleSelections)
 			->addElement($this->otherField)
 			->addElement($this->otherFieldSingleLine);
 		
@@ -50,6 +57,10 @@ class Survey_Form_MultipleChoiceQuestion extends Survey_Form_QuestionEdit
 		$this->otherFieldSingleLine->setValue($singleLine);
 	}
 	
+	function setMultipleSelections($multipleSelections) {
+		$this->multipleSelections->setValue($multipleSelections);
+	}
+	 
 	function addSelection($text)
 	{
 		

@@ -49,8 +49,7 @@ abstract class Survey_Form_QuestionEdit extends Zend_Form
 		$this->questionType->setLabel('Question Type:')
 			->setMultiOptions(array(
 				'-1' => '',
-				enums_QuestionCategory::MultipleChoiceOneAnswer => 'Multiple Choice - one answer',
-				enums_QuestionCategory::MultipleChoiceMultipleAnswers => 'Multiple Choice - multiple answers',
+				enums_QuestionCategory::MultipleChoice => 'Multiple Choice',
 				enums_QuestionCategory::CommentEssayBox	=> 'Comment/Essay Box',
 				enums_QuestionCategory::DescriptiveText => 'Descriptive Text',
 				enums_QuestionCategory::MatrixOfChoices => 'Matrix of Choices'

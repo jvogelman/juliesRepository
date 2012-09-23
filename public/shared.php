@@ -82,8 +82,7 @@ function deleteQuestionFromPage($questionId) {
 	decrementQuestionIndices($surveyId, $userId, $page, $index);
 
 	switch ($questions[0]['CategoryID']) {
-		case enums_QuestionCategory::MultipleChoiceOneAnswer:
-		case enums_QuestionCategory::MultipleChoiceMultipleAnswers:
+		case enums_QuestionCategory::MultipleChoice:
 			$q = Doctrine_Query::create()
 			->delete('Survey_Model_Multiplechoicequestion m')
 			->where('m.QuestionID = ?', $questionId);
@@ -214,8 +213,7 @@ function copyQuestion($surveyId, $questionId, $newPage, $newQuestionIndex) {
 			}
 				
 			break;
-		case enums_QuestionCategory::MultipleChoiceMultipleAnswers:
-		case enums_QuestionCategory::MultipleChoiceOneAnswer:
+		case enums_QuestionCategory::MultipleChoice:
 
 			$q = Doctrine_Query::create()
 			->select('q.*')

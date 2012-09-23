@@ -3,12 +3,11 @@
 
 class enums_QuestionCategory {
 	const Undefined = 999;
-	const MultipleChoiceOneAnswer = 1;
-	const MultipleChoiceMultipleAnswers = 2;
-	const CommentEssayBox = 3;
-	const DescriptiveText = 4;
-	const MatrixOfChoices = 5;
-	const MatrixOfChoicesChild = 6;
+	const MultipleChoice = 1;
+	const CommentEssayBox = 2;
+	const DescriptiveText = 3;
+	const MatrixOfChoices = 4;
+	const MatrixOfChoicesChild = 5;
 }
 
 
