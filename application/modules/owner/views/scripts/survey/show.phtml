@@ -897,7 +897,6 @@ $survey = $this->survey;
 
 
 <h2><?php echo $survey["Name"]; ?></h2>
-
 <table>
 	<tr>
 		<td class="descriptionTd">Description:</td>
@@ -980,21 +979,28 @@ for ($i = 1; $i <= $survey['NumPages']; $i++): // go through the pages
 						case enums_QuestionCategory::MultipleChoice:	
 							for ($k = 0; $k < count($select); $k++):
 								$s = $select[$k];
+								// if user can make multiple selections, checkboxes should be used; otherwise radio buttons
 								if ($question["MultipleSelections"]) {
 									echo "<input type=\"checkbox\" name=\"QuestionID_" . $question["ID"] . "_" . $k  . "\" value=\"" . $k . "\" selection=\"multiple\">" . html_entity_decode($s["Text"]) . "</input><br>";
 								} else {
 									echo "<input type=\"radio\" name=\"QuestionID_" . $question["ID"] . "\" value=\"" . $k . "\">" . html_entity_decode($s["Text"]) . "</input><br>";
 								}
 							endfor;
+
+							// if user can select an "other" field, show it here
+							if ($question["AddOtherField"]) {
+								echo "<br>Other (please specify):<br>";
+								if ($question["mSingleLine"]) {
+									// display one line text box
+									echo "<input type='text' size='70'/>";
+								} else {
+									echo "<textarea rows='3' cols='70'></textarea>";
+								}
+							}
+								
 							$questionIndex++;
 							break;
-						/*case enums_QuestionCategory::MultipleChoiceMultipleAnswers: 
-							for ($k = 0; $k < count($select); $k++):
-								$s = $select[$k];
-								echo "<input type=\"checkbox\" name=\"QuestionID_" . $question["ID"] . "_" . $k  . "\" value=\"" . $k . "\" selection=\"multiple\">" . html_entity_decode($s["Text"]) . "</input><br>";
-							endfor;
-							$questionIndex++;
-							break;*/	
+						
 						case enums_QuestionCategory::CommentEssayBox:
 							if ($question["SingleLine"]) {
 								echo "<input type='text' size='70'/>";
@@ -1070,4 +1076,3 @@ for ($i = 1; $i <= $survey['NumPages']; $i++): // go through the pages
 <p align='center'><button class='pageAddButton'>Add Page</button><input type='hidden' class='page' value='<?php echo ($i + 1); ?>'></p>
 
 <?php endfor; ?>	
-

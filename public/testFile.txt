@@ -19,7 +19,7 @@
 <input type="hidden" name="requireAnswer" value="0"><input type="checkbox" name="requireAnswer" id="requireAnswer" value="1" checked="checked" class="zendFormElement">
 <label for="requireAnswer" class="formLabel optional">Require an answer to this question</label></p>
 <p>
-<input type="hidden" name="multipleSelections" value="0"><input type="checkbox" name="multipleSelections" id="multipleSelections" value="1" checked="checked" class="zendFormElement">
+<input type="hidden" name="multipleSelections" value="0"><input type="checkbox" name="multipleSelections" id="multipleSelections" value="1" class="zendFormElement">
 <label for="multipleSelections" class="formLabel optional">Enable multiple selections</label></p>
 <dt id="selection-label">&#160;</dt><dd id="selection-element"><fieldset id="fieldset-selection"><dl>
 <p><label for="selection-1" class="formLabel optional">a.</label>

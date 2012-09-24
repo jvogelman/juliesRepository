@@ -4,28 +4,65 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 		<base href="/" />
-		<link rel="stylesheet" type="text/css" href="/css/master.css" />
+		<!--  <link rel="stylesheet" type="text/css" href="/css/master.css" />-->
+    	<link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css">
 		<?php echo $this->jQuery();  ?>
 		<script type="text/javascript" src="/js/jquery/js/jquery.cookie.js"></script>
+		<script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
 	</head>
 	<body> 
 		<div id="header">
 		<h1><img src="/img/logo.gif" /></h1>
-		<table id="navPanel"><tr>
+		 <!--  <table id="navPanel"><tr>
 			<td class="navPanelLabel" id="mySurveys" onclick="location.assign('/owner/surveylist/index')">My Surveys</td>
 			<td class="navPanelLabel" id="createSurvey" onclick="location.assign('/owner/surveylist/create')">Create Survey</td>
 			<td id="navPanelEmpty"></td>
 			<td class="navPanelLabel" id="logInOut">Log In</td>
-		</tr></table>
+		</tr></table>--> 
+			
+			<div class="navbar">
+	  			<div class="navbar-inner">
+					<ul class="nav">
+					  <li><a href="/owner/surveylist/index">Home</a></li>
+					  <li class="dropdown">
+					    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+					      New
+					      <b class="caret"></b>
+					    </a>
+					    <ul class="dropdown-menu"><li>Study</li><li>Survey</li></ul>
+					  </li>
+					</ul>
+				</div>
+			</div>
+			
 	    </div>
-	    <div'>
-	    	<table style='width:90%'><tr>
-	    		<td width='200px' id='menu'><?php echo $this->partial('partials/menu.phtml', 
+	    <div>
+	    <?php if (isset($this->studyName)): ?>
+	    <ul class="nav nav-tabs pull-right">
+		  <li class="active">
+		    <a href="#">Design Survey</a>
+		  </li>
+		  <li><a href="#">Select Participants</a></li>
+		  <li><a href="#">Analyze Results</a></li>
+		</ul>
+	    <?php endif; ?>
+	    </div><br><br>
+	    
+    	<div class='row'>
+    		<?php if (isset($this->studyName) && isset($this->surveyNames)) { ?>
+    			<div class='span2 offset1'>
+    		
+    			<?php echo $this->partial('partials/menu.phtml', 
                             array('studyName' => $this->studyName,
                             	'surveyNames' => $this->surveyNames)); ?>
-                </td>
-      			<td><div id="content"><?php echo $this->layout()->content ?></div> </td>
-      		</tr></table>
-    	</div> 
+                </div>
+      			<div class='span9' id="content"><?php echo $this->layout()->content ?></div>
+    	
+    	<?php } else {
+    		echo '<div class="span10 offset1" id="content">' . $this->layout()->content . '</div>';
+    		
+    	}?> 
+      		
+      	</div>
   	</body>
  </html>
