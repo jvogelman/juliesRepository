@@ -13,7 +13,21 @@ function getUserId(){
 	return $_SESSION["userId"];
 }
 
-
+// verify that this user is the owner of this study
+function verifyUserMatchesStudy($studyId) {
+	$userId = getUserId();
+	
+	$q = Doctrine_Query::create()
+		->select('')
+		->from('Survey_Model_Study study')
+		->leftJoin('study.Survey_Model_Folder f')
+		->where('f.OwnerID = ?', $userId)
+		->addWhere('study.ID = ?', $studyId);
+	$result = $q->fetchArray();
+	if (count($result) < 1) {
+		throw new Zend_Controller_Action_Exception('User does not have permission to access this study: user = ' . $userId . ', study ID = ' . $studyId);
+	}
+}
 
 // verify that this user is the owner of this survey
 function verifyUserMatchesSurvey($surveyId){

@@ -1,0 +1,74 @@
+<script type="text/javascript" src="jquery/jquery-1.7.2.js"></script>
+
+<script type="text/javascript">
+function onDelete(surveyName,surveyId){
+		
+	if (confirm("Are you sure you want to delete '" + surveyName + "'?") == true)
+	{
+		location.assign("/owner/study/delete/" + surveyId);
+	}
+		
+}
+
+</script>
+
+<style type="text/css">
+.key {
+	font-weight: bold;
+}
+
+.cell {
+	padding: 10px;
+}
+
+td {
+	padding: 5px;
+}
+
+.descriptionTd {
+	vertical-align: bottom;
+}
+
+h4 {
+    display:inline;
+}
+
+</style>
+
+<div class='row'>
+<div class='span5 offset1'><h2><?php echo $this->study['Name']; ?></h2></div><br>
+</div>
+<br>
+<div class='row'>
+		<div class="span2 offset1 descriptionTd"><h4><i>Description:</i></h4></div>
+		<div class="span9 descriptionTd" style="color:navy;"><h4><?php echo $this->study["Description"]; ?></h4>&nbsp;&nbsp; [Edit]</div>
+</div>
+<br>
+
+<?php if (count($this->surveys)):?>
+<div class='row'>
+<div class='span10 offset1' id="surveylist">
+<table class='table table-striped'>
+	<tr>
+		<td></td>
+		<td class="key" class="cell">Name</td>
+		<!--  <td class="key" class="cell">Date Modified</td>
+		<td class="key" class="cell">Date Created</td>-->
+		<td></td>
+	</tr>
+	
+	<?php foreach($this->surveys as $survey): ?>
+	<tr>
+	<td></td>
+	<td class="cell"><a href="<?php echo $this->url(array('surveyId' => $survey["ID"]), 'owner-survey-show') ?> "><?php echo $this->escape($survey['Name']);?> </a> </td>
+	<!--  <td class="cell"><?php echo $this->escape($survey['DateModified']);?> </td>
+	<td class="cell"><?php echo $this->escape($survey['DateCreated']);?> </td>-->
+	<td class="cell"><input type="button" onclick="onDelete('<?php echo $this->escape($survey['Name']) . "'," . $survey['ID'];?>)" value="Delete" /></td>
+	
+	</tr>
+	<?php endforeach; ?>
+
+</table>
+</div>
+</div>
+<?php endif; ?>
