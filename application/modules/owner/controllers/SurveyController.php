@@ -155,7 +155,6 @@ class Owner_SurveyController extends Zend_Controller_Action
 				$q = Doctrine_Query::create()
 					->update('Survey_Model_Survey s')
 					->set('s.Description', '?', $input->description)
-					->where('s.OwnerID = ?', $userId)
 					->addWhere('s.ID = ?', $input->surveyId);
 				$q->execute();
 				$response = $input->description;

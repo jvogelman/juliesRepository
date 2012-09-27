@@ -11,9 +11,9 @@ Doctrine_Manager::getInstance()->bindComponent('Survey_Model_Survey', 'doctrine'
  * @property string $Name
  * @property string $Description
  * @property integer $NumPages
- * @property integer $OwnerID
  * @property timestamp $DateModified
  * @property timestamp $DateCreated
+ * @property integer $StudyID
  * 
  * @package    ##PACKAGE##
  * @subpackage ##SUBPACKAGE##
@@ -60,15 +60,6 @@ abstract class Survey_Model_BaseSurvey extends Doctrine_Record
              'notnull' => true,
              'autoincrement' => false,
              ));
-        $this->hasColumn('OwnerID', 'integer', 4, array(
-             'type' => 'integer',
-             'length' => 4,
-             'fixed' => false,
-             'unsigned' => false,
-             'primary' => false,
-             'notnull' => true,
-             'autoincrement' => false,
-             ));
         $this->hasColumn('DateModified', 'timestamp', null, array(
              'type' => 'timestamp',
              'fixed' => false,
@@ -83,6 +74,15 @@ abstract class Survey_Model_BaseSurvey extends Doctrine_Record
              'unsigned' => false,
              'primary' => false,
              'notnull' => true,
+             'autoincrement' => false,
+             ));
+        $this->hasColumn('StudyID', 'integer', 4, array(
+             'type' => 'integer',
+             'length' => 4,
+             'fixed' => false,
+             'unsigned' => false,
+             'primary' => false,
+             'notnull' => false,
              'autoincrement' => false,
              ));
     }

@@ -15,7 +15,7 @@ class Survey_Model_User extends Survey_Model_BaseUser
 	public function setUp()
 	{
 	
-		$this->hasMany('Survey_Model_Survey', array(
+		$this->hasMany('Survey_Model_Folder', array(
 			'local' => 'ID',
 			'foreign' => 'OwnerID'
 		));

@@ -19,13 +19,27 @@ function getUserId(){
 function verifyUserMatchesSurvey($surveyId){
 	$userId = getUserId();
 
+	// find this survey and get its study ID
 	$q = Doctrine_Query::create()
-	->select('s.ID, s.OwnerID') 
-	->from('Survey_Model_Survey s')
-	->where('s.OwnerID = ?', $userId)
+	->select('study.ID') 
+	->from('Survey_Model_Study study')
+	->leftJoin('Survey_Model_Survey s')
 	->addWhere('s.ID = ?', $surveyId);
-	$surveys = $q->fetchArray();
-	if (count($surveys) < 1) {
+	$studies = $q->fetchArray();
+	if (count($studies) < 1) {
+		throw new Zend_Controller_Action_Exception('Survey ID = ' . $surveyId . ' not found');
+	}
+
+	// verify this study belongs to the owner of this survey
+	$q = Doctrine_Query::create()
+	->select('') 
+	->from('Survey_Model_Study study')
+	->leftJoin('study.Survey_Model_Folder f')
+	//->leftJoin('Survey_Model_Folder f')
+	->where('f.OwnerID = ?', $userId)
+	->addWhere('study.ID = ?', $studies[0]['ID']);
+	$result = $q->fetchArray();
+	if (count($result) < 1) {
 		throw new Zend_Controller_Action_Exception('User does not have permission to access this survey: user = ' . $userId . ', survey ID = ' . $surveyId);
 	}
 }
@@ -34,30 +48,28 @@ function verifyUserMatchesSurvey($surveyId){
 function verifyUserMatchesQuestion($questionId){
 	$userId = getUserId();
 
+	// get the survey ID
 	$q = Doctrine_Query::create()
-	->select('q.ID, q.SurveyID, s.OwnerID') 
-	//->select('q.*, s.OwnerID')
+	->select('q.SurveyID') 
 	->from('Survey_Model_Question q')
-	->leftJoin('q.Survey_Model_Survey s')
-	->where('s.OwnerID = ?', $userId)
 	->addWhere('q.ID = ?', $questionId);
 	$questions = $q->fetchArray();
 	if (count($questions) < 1) {
-		throw new Zend_Controller_Action_Exception('User does not have permission to access this question: user = ' . $userId . ', questionId = ' . $questionId);
+		throw new Zend_Controller_Action_Exception('QuestionId = ' . $questionId . ' not found');
 	}
 
+	// now verify that this survey belongs to this user
+	verifyUserMatchesSurvey($questions[0]['SurveyID']);
 }
 
 function deleteQuestionFromPage($questionId) {
 
 	// first verify that this is the right user for this survey question
-	$userId = getUserId();
+	verifyUserMatchesQuestion($questionId);
 
 	$q = Doctrine_Query::create()
-	->select('q.SurveyID, q.QuestionIndex, q.PageID, q.CategoryID, s.OwnerID')
+	->select('q.SurveyID, q.QuestionIndex, q.PageID, q.CategoryID')
 	->from('Survey_Model_Question q')
-	->leftJoin('q.Survey_Model_Survey s')
-	->where('s.OwnerID = ?', $userId)
 	->addWhere('q.ID = ?', $questionId);
 	$questions = $q->fetchArray();
 	if (count($questions) < 1) {
@@ -273,12 +285,11 @@ function getPageAtIndex($surveyId, $pageIndex) {
 function incrementQuestionIndices($surveyId, $userId, $page, $firstIndex) {
 
 	$q = Doctrine_Query::create()
-	->select('q.ID, q.QuestionIndex, s.OwnerID')
+	->select('q.ID, q.QuestionIndex')
 	->from('Survey_Model_Question q')
 	->leftJoin('q.Survey_Model_Survey s')
 	->where('q.SurveyID = ?', $surveyId)
 	->addWhere('q.PageID = ?', $page)
-	->addWhere('s.OwnerID = ?', $userId)
 	->addWhere('q.QuestionIndex >= ?', $firstIndex)
 	->addWhere('q.ParentQuestionID IS NULL');
 	$questions = $q->fetchArray();
@@ -295,12 +306,11 @@ function incrementQuestionIndices($surveyId, $userId, $page, $firstIndex) {
 
 function decrementQuestionIndices($surveyId, $userId, $page, $firstIndex) {
 	$q = Doctrine_Query::create()
-	->select('q.ID, q.QuestionIndex, s.OwnerID')
+	->select('q.ID, q.QuestionIndex')
 	->from('Survey_Model_Question q')
 	->leftJoin('q.Survey_Model_Survey s')
 	->where('q.SurveyID = ?', $surveyId)
 	->addWhere('q.PageID = ?', $page)
-	->addWhere('s.OwnerID = ?', $userId)
 	->addWhere('q.QuestionIndex >= ?', $firstIndex)
 	->addWhere('q.ParentQuestionID IS NULL');
 	$questions = $q->fetchArray();
