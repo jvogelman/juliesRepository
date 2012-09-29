@@ -1,6 +1,7 @@
 <?php
 
 require_once 'shared.php';
+require_once '../application/modules/owner/models/UserVerification.php';
 
 class Owner_StudyController extends Zend_Controller_Action
 {

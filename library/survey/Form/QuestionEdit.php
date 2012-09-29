@@ -15,6 +15,7 @@ abstract class Survey_Form_QuestionEdit extends Zend_Form
 			array('ViewHelper'),
 			array('Label', array('class' => 'formLabel', 'placement' => 'APPEND')),
 			array('Errors'),
+			//array('HtmlTag', array('tag' => 'div')));
 			array('HtmlTag', array('tag' => 'p')));
 
 	public $buttonDecorators = array(

@@ -1,46 +1,50 @@
-<form enctype="application/x-www-form-urlencoded" action="owner/question/save/1" method="post">
+<form enctype="application/x-www-form-urlencoded" action="owner/question/save/17" method="post">
 
-<input type="hidden" name="hiddenQuestionId" value="1" class="hidden" id="hiddenQuestionId">
+<input type="hidden" name="hiddenQuestionId" value="17" class="hidden" id="hiddenQuestionId">
 
 <input type="hidden" name="hiddenCloseDlg" value="" class="hidden" id="hiddenCloseDlg">
 <p><label for="question" class="formLabel required">Question Description:</label>
 
-<textarea name="question" id="question" class="zendFormElement" rows="3" cols="50">Is it blue?</textarea></p>
+<textarea name="question" id="question" class="zendFormElement" rows="3" cols="50">How often do you do the following activities?</textarea></p>
 <p><label for="questionType" class="formLabel optional">Question Type:</label>
 
 <select name="questionType" id="questionType" class="zendFormElement">
     <option value="-1" label=""></option>
-    <option value="1" label="Multiple Choice" selected="selected">Multiple Choice</option>
+    <option value="1" label="Multiple Choice">Multiple Choice</option>
     <option value="2" label="Comment/Essay Box">Comment/Essay Box</option>
     <option value="3" label="Descriptive Text">Descriptive Text</option>
-    <option value="4" label="Matrix of Choices">Matrix of Choices</option>
+    <option value="4" label="Matrix of Choices" selected="selected">Matrix of Choices</option>
 </select></p>
 <p>
-<input type="hidden" name="requireAnswer" value="0"><input type="checkbox" name="requireAnswer" id="requireAnswer" value="1" checked="checked" class="zendFormElement">
+<input type="hidden" name="requireAnswer" value="0"><input type="checkbox" name="requireAnswer" id="requireAnswer" value="1" class="zendFormElement">
 <label for="requireAnswer" class="formLabel optional">Require an answer to this question</label></p>
+
+<input type="hidden" name="hiddenRowChoices" value="read,play tennis,talk on the phone," class="hidden" id="hiddenRowChoices">
+
+<input type="hidden" name="hiddenColumnChoices" value="Usually,Frequently,Never," class="hidden" id="hiddenColumnChoices">
 <p>
-<input type="hidden" name="multipleSelections" value="0"><input type="checkbox" name="multipleSelections" id="multipleSelections" value="1" checked="checked" class="zendFormElement">
-<label for="multipleSelections" class="formLabel optional">Enable multiple selections</label></p>
-<dt id="selection-label">&#160;</dt><dd id="selection-element"><fieldset id="fieldset-selection"><dl>
-<p><label for="selection-1" class="formLabel optional">a.</label>
+<input type="hidden" name="randomize" value="0"><input type="checkbox" name="randomize" id="randomize" value="1" class="zendFormElement">
+<label for="randomize" class="formLabel optional">Randomize answers</label></p>
+<dt id="rowChoicesGroup-label">&#160;</dt><dd id="rowChoicesGroup-element"><fieldset id="fieldset-rowChoicesGroup"><dl>
+<p><label for="rowChoices" class="formLabel optional">Row Choices:</label>
 
-<textarea name="selection[1]" id="selection-1" rows="3" cols="70" class="selection zendFormElement">It is blue</textarea></p>
-<p><label for="selection-2" class="formLabel optional">b.</label>
+<select name="rowChoices" id="rowChoices" class="zendFormElement">
+    <option value="1" label="read">read</option>
+    <option value="2" label="play tennis">play tennis</option>
+    <option value="3" label="talk on the phone">talk on the phone</option>
+</select></p>
 
-<textarea name="selection[2]" id="selection-2" rows="3" cols="70" class="selection zendFormElement">It is notblue</textarea></p>
-<p><label for="selection-3" class="formLabel optional">c.</label>
+<input type="submit" name="updateChoicesRow" id="updateChoicesRow" value="Update Choices"></dl></fieldset></dd>
+<dt id="columnChoicesGroup-label">&#160;</dt><dd id="columnChoicesGroup-element"><fieldset id="fieldset-columnChoicesGroup"><dl>
+<p><label for="columnChoices" class="formLabel optional">Column Choices:</label>
 
-<textarea name="selection[3]" id="selection-3" rows="3" cols="70" class="selection zendFormElement">might be blue</textarea></p></dl></fieldset></dd>
-<dt id="otherFieldGroup-label">&#160;</dt><dd id="otherFieldGroup-element"><fieldset id="fieldset-otherFieldGroup"><dl>
-<p>
-<input type="hidden" name="otherField" value="0"><input type="checkbox" name="otherField" id="otherField" value="1" checked="checked" class="zendFormElement">
-<label for="otherField" class="formLabel optional">Add &quot;Other&quot; field to selections above</label></p>
-<p><label for="otherFieldSize" class="formLabel optional">Size of Field</label>
+<select name="columnChoices" id="columnChoices" class="zendFormElement">
+    <option value="0" label="Usually">Usually</option>
+    <option value="1" label="Frequently">Frequently</option>
+    <option value="2" label="Never">Never</option>
+</select></p>
 
-<select name="otherFieldSize" id="otherFieldSize" class="zendFormElement">
-    <option value="0" label="Text area" selected="selected">Text area</option>
-    <option value="1" label="Single Line of Text">Single Line of Text</option>
-</select></p></dl></fieldset></dd>
+<input type="submit" name="updateChoicesColumn" id="updateChoicesColumn" value="Update Choices"></dl></fieldset></dd>
 
 <input type="submit" name="save" id="save" value="Save/Close">
 

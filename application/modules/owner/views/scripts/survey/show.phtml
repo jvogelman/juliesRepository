@@ -874,12 +874,15 @@ td {
 .editQuestionDialog {
 	font-size: small;
 }
+label {
+  display: inline-block;
+}
 
-
+/*
 .formLabel {
 	font-size: medium;
 	vertical-align: top;
-}
+}*/
 /*
 button {
 	background-color:DarkSlateGrey;
@@ -988,9 +991,9 @@ for ($i = 1; $i <= $survey['NumPages']; $i++): // go through the pages
 								$s = $select[$k];
 								// if user can make multiple selections, checkboxes should be used; otherwise radio buttons
 								if ($question["MultipleSelections"]) {
-									echo "<input type=\"checkbox\" name=\"QuestionID_" . $question["ID"] . "_" . $k  . "\" value=\"" . $k . "\" selection=\"multiple\">" . html_entity_decode($s["Text"]) . "</input><br>";
+									echo "<label class=\"checkbox\"><input type=\"checkbox\" \"QuestionID_" . $question["ID"] . "_" . $k  . "\" value=\"" . $k . "\" selection=\"multiple\">" . html_entity_decode($s["Text"]) . "</input></label><br>";
 								} else {
-									echo "<input type=\"radio\" name=\"QuestionID_" . $question["ID"] . "\" value=\"" . $k . "\">" . html_entity_decode($s["Text"]) . "</input><br>";
+									echo "<label class=\"radio\"> <input type=\"radio\" name=\"QuestionID_" . $question["ID"] . "\" value=\"" . $k . "\">" . html_entity_decode($s["Text"]) . "</input></label><br>";
 								}
 							endfor;
 
@@ -1023,7 +1026,7 @@ for ($i = 1; $i <= $survey['NumPages']; $i++): // go through the pages
 							
 							$select = $this->selections[$question["ID"]];?>
 							
-							<table class='matrixOfChoicesTable'>
+							<table class='matrixOfChoicesTable table table-striped'>
 								<tr><td class='matrixOfChoicesCell'></td>
 								<?php 
 								for ($m = 0; $m < count($select); $m++) :
