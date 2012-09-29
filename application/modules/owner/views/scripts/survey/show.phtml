@@ -49,12 +49,12 @@ function PromptDialog() {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	$('#cancelPromptDialog').live('click', function(){
 		_dlg.dialog('close');
-		_dlg.unbind('submit');
+		_dlg.unbind('submit'); // ### this doesn't make sense and should be replaced by unbinding click from okayPromptDialog
 	});
 
 	$('#okayPromptDialog').live('click', function(){
 		_dlg.dialog('close');
-		_dlg.unbind('submit');
+		_dlg.unbind('submit'); // ### this doesn't make sense and should be replaced by unbinding click from okayPromptDialog
 	});
 	
 
@@ -110,6 +110,7 @@ function EditQDialog() {
 	var _type = -1;
 	var _this = this;
 	var _newQuestion = false;
+	var _needsRefresh = false;
 
 	// this is for the MatrixOfChoices edit dialog
 	var _updateChoicesDlg = $('<div id="updateChoicesDialog"></div>')
@@ -151,6 +152,12 @@ function EditQDialog() {
 		e.preventDefault();	// prevents submit
 		unbind();
 		_dlg.dialog('close');
+
+		// if we previously clicked "Save/Next Question", then refresh screen
+		if (_needsRefresh) {
+			$.cookie('scrollToPos', $(document).scrollTop());
+			window.location = '/owner/survey/show/' + _surveyId;
+		}
 	});
 
 	// the "Save/Close" submit button
@@ -179,6 +186,8 @@ function EditQDialog() {
 		else {
     		unbind();
 		}
+		_needsRefresh = true;
+		
 		$.post('/owner/question/save/' + _questionId, data,
                 //callback function
                 function (response) {
@@ -873,9 +882,6 @@ td {
 
 .editQuestionDialog {
 	font-size: small;
-}
-label {
-  display: inline-block;
 }
 
 /*

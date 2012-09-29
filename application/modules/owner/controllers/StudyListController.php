@@ -1,6 +1,6 @@
 <?php
-require_once 'shared.php';
 require_once '../application/modules/owner/models/UserVerification.php';
+require_once '../application/modules/owner/models/StudyMapper.php';
 
 class Owner_StudyListController extends Zend_Controller_Action
 {
@@ -28,8 +28,37 @@ class Owner_StudyListController extends Zend_Controller_Action
 		$q = Doctrine_Query::create()
 		->from('Survey_Model_Study s')
 		->leftJoin('s.Survey_Model_Folder f')
-		->where('f.OwnerID = ' . $userId);
+		->where('f.OwnerID = ?', $userId);
 		$result = $q->fetchArray();
 		$this->view->records = $result;
 	}
+	
+	// delete a study
+	public function deleteAction() {
+		session_start();
+		
+		$userVerification = new Owner_Model_UserVerification();
+		$studyMapper = new Owner_Model_StudyMapper();
+
+		// set filters and validators for GET input
+		$filters = array(
+				'studyId' => array('HtmlEntities', 'StripTags', 'StringTrim')
+		);
+		
+		$validators = array(
+				'studyId' => array('NotEmpty', 'Int')
+		);
+		
+		$input = new Zend_Filter_Input($filters, $validators);
+		$input->setData($this->getRequest()->getParams());
+		
+		$userVerification->verifyUserMatchesStudy($input->studyId);
+		
+		$studyMapper->delete($input->studyId);
+		
+		$this->_redirect('/owner/studylist/index');
+		
+	}
 }
+
+

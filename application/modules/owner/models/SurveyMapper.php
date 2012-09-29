@@ -2,9 +2,38 @@
 
 require_once 'enums.php';
 require_once '../application/modules/owner/models/UserVerification.php';
+require_once '../application/modules/owner/models/QuestionMapper.php';
 
 class Owner_Model_SurveyMapper
 {
+	
+	function delete($surveyId) {
+
+		// delete each page in the survey
+		// how many pages are in this survey?
+		$q = Doctrine_Query::create()
+			->select('s.NumPages')
+			->from('Survey_Model_Survey s')
+			->where('s.ID = ?', $surveyId);
+		$surveys = $q->fetchArray();
+		if (count($surveys) < 1) {
+			throw new Zend_Controller_Action_Exception('No survey found with ID ' . $surveyId);			
+		} else if (count($surveys) > 1) {
+			throw new Zend_Controller_Action_Exception('Multiple surveys found with ID ' . $surveyId);			
+		}
+		
+		$numPages = $surveys[0]['NumPages'];
+		for ($page = $numPages; $page >= 1; $page--) {
+			$this->deletePage($surveyId, $page);
+		}
+		
+		// delete the survey
+		$q = Doctrine_Query::create()
+		->delete('Survey_Model_Survey s')
+		->where('s.ID = ?', $surveyId);
+		$q->execute();
+		
+	}
 
 	// return page ID corresponding to PageNum
 	function getPageAtIndex($surveyId, $pageIndex) {
@@ -257,7 +286,9 @@ class Owner_Model_SurveyMapper
 		->where('s.ID = ?', $surveyId);
 		$surveys = $q->fetchArray();
 		if (count($surveys) < 1) {
-			throw new Zend_Controller_Action_Exception('No survey found with requested ID');
+			throw new Zend_Controller_Action_Exception('No survey found with ID ' . $surveyId);			
+		} else if (count($surveys) > 1) {
+			throw new Zend_Controller_Action_Exception('Multiple surveys found with ID ' . $surveyId);			
 		}
 	
 		$q = Doctrine_Query::create()
@@ -275,7 +306,9 @@ class Owner_Model_SurveyMapper
 		->where('s.ID = ?', $surveyId);
 		$surveys = $q->fetchArray();
 		if (count($surveys) < 1) {
-			throw new Zend_Controller_Action_Exception('No survey found with requested ID');
+			throw new Zend_Controller_Action_Exception('No survey found with ID ' . $surveyId);			
+		} else if (count($surveys) > 1) {
+			throw new Zend_Controller_Action_Exception('Multiple surveys found with ID ' . $surveyId);			
 		}
 	
 		// make sure num page nums isn't 0
@@ -290,7 +323,20 @@ class Owner_Model_SurveyMapper
 		$q->execute();
 	}
 	
-
+	function getField($fieldName, $surveyId) {
+		$q = Doctrine_Query::create()
+		->select('s.' . $fieldName)
+		->from('Survey_Model_Survey s')
+		->where('s.ID = ?', $surveyId);
+		$surveys = $q->fetchArray();
+		if (count($surveys) < 1) {
+			throw new Zend_Controller_Action_Exception('No survey found with ID ' . $surveyId);			
+		} else if (count($surveys) > 1) {
+			throw new Zend_Controller_Action_Exception('Multiple surveys found with ID ' . $surveyId);			
+		}
+	
+		return $surveys[0][$fieldName];
+	}
 }
 
 ?>

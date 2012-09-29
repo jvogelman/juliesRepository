@@ -19,7 +19,9 @@ class Owner_Model_QuestionMapper
 		->addWhere('q.ID = ?', $questionId);
 		$questions = $q->fetchArray();
 		if (count($questions) < 1) {
-			throw new Zend_Controller_Action_Exception('Deletion failed for some reason, question ID = ' . $questionId . ', user id = ' . $userId);
+			throw new Zend_Controller_Action_Exception('No question found with requested ID ' . $questionId);
+		} else if (count($questions) > 1) {
+			throw new Zend_Controller_Action_Exception('Multiple questions found with requested ID ' . $questionId);
 		}
 	
 		$surveyId = $questions[0]['SurveyID'];
@@ -210,7 +212,9 @@ class Owner_Model_QuestionMapper
 				->addWhere('q.QuestionID = ?', $questionId);
 				$questions = $q->fetchArray();
 				if (count($questions) < 1) {
-					throw new Zend_Controller_Action_Exception('Failed to locate question category specific entry in database');
+					throw new Zend_Controller_Action_Exception('No question found in Essayboxquestion table with requested ID ' . $questionId);
+				} else if (count($questions) > 1) {
+					throw new Zend_Controller_Action_Exception('Multiple questions found in Essayboxquestion table with requested ID ' . $questionId);
 				}
 	
 				$newQ = new Survey_Model_Essayboxquestion;
@@ -227,7 +231,9 @@ class Owner_Model_QuestionMapper
 				->addWhere('q.QuestionID = ?', $questionId);
 				$questions = $q->fetchArray();
 				if (count($questions) < 1) {
-					throw new Zend_Controller_Action_Exception('Failed to locate question category specific entry in database');
+					throw new Zend_Controller_Action_Exception('No question found in MatrixOfChoices table with requested ID ' . $questionId);
+				} else if (count($questions) > 1) {
+					throw new Zend_Controller_Action_Exception('Multiple questions found in MatrixOfChoices table with requested ID ' . $questionId);
 				}
 	
 				$newQ = new Survey_Model_Matrixofchoicesquestion;
@@ -261,7 +267,9 @@ class Owner_Model_QuestionMapper
 				->addWhere('q.QuestionID = ?', $questionId);
 				$questions = $q->fetchArray();
 				if (count($questions) < 1) {
-					throw new Zend_Controller_Action_Exception('Failed to locate question category specific entry in database');
+					throw new Zend_Controller_Action_Exception('No question found in MultipleChoice table with requested ID ' . $questionId);
+				} else if (count($questions) > 1) {
+					throw new Zend_Controller_Action_Exception('Multiple questions found in MultipleChoice table with requested ID ' . $questionId);
 				}
 	
 				$newQ = new Survey_Model_Multiplechoicequestion;
@@ -288,6 +296,21 @@ class Owner_Model_QuestionMapper
 			$newSelection->Text = $selection['Text'];
 			$newSelection->save();
 		}
+	}
+	
+	function getField($fieldName, $questionId) {
+		$q = Doctrine_Query::create()
+		->select('q.' . $fieldName)
+		->from('Survey_Model_Question q')
+		->where('q.ID = ?', $questionId);
+		$questions = $q->fetchArray();
+		if (count($questions) < 1) {
+			throw new Zend_Controller_Action_Exception('No question found with requested ID ' . $questionId);
+		} else if (count($questions) > 1) {
+			throw new Zend_Controller_Action_Exception('Multiple questions found with requested ID ' . $questionId);
+		}
+	
+		return $questions[0][$fieldName];
 	}
 }
 

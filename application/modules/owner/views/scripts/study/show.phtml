@@ -1,14 +1,89 @@
-<script type="text/javascript" src="jquery/jquery-1.7.2.js"></script>
 
 <script type="text/javascript">
+
+var promptDialog = new PromptDialog();
+
+function PromptDialog() {
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// PRIVATE VARIABLES
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+	
+	// do a body.append here...	
+		
+	$('body').append('<div class="modal hide" id="promptDialog" tabindex="-1" role="dialog" aria-labelledby="promptDialogLabel" aria-hidden="true">'
+	  + '<div class="modal-header">'
+	  + '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>'
+	  + '<h4 id="promptDialogLabel"></h4>'
+	  + '</div>'
+	  + '<div class="modal-body">'
+	  + '<p><input type="text" id="promptTextField" size="70"/></p>'
+	  + '</div>'
+	  + '<div class="modal-footer">'
+	  + '<button id="okayPromptDialog" class="btn btn-primary">Okay</button> '
+	  + '<button id="cancelPromptDialog">Cancel</button>'
+	  + '</div>'
+	  + '</div>');
+
+	var _this = this;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//PRIVATE METHODS
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	$('#cancelPromptDialog').live('click', function(){
+		//_dlg.dialog('close');
+		//_dlg.unbind('submit');
+		$('#promptDialog').modal('hide');
+		$('#okayPromptDialog').unbind('click');
+	});
+
+	$('#okayPromptDialog').live('click', function(){
+		$('#promptDialog').modal('hide');
+		$('#okayPromptDialog').unbind('click');
+	});
+	
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//PRIVILEGED METHODS
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+	this.open = function(prompt, textFieldVal, submitFunction) {
+		/*
+		_dlg.dialog('option', 'title', prompt);
+		$('#promptTextField').val(textFieldVal);
+
+		_dlg.dialog('open');
+
+		$('#okayPromptDialog').click(submitFunction);*/
+		$('#promptDialogLabel').text(prompt);
+		$('#promptTextField').val(textFieldVal);
+		$('#promptDialog').modal('show');
+		$('#okayPromptDialog').click(submitFunction);
+	}
+
+	
+}
+
+
 function onDelete(surveyName,surveyId){
 		
-	if (confirm("Are you sure you want to delete '" + surveyName + "'?") == true)
+	if (confirm("Are you sure you want to delete '" + surveyName + "'? This cannot be undone.") == true)
 	{
-		location.assign("/owner/study/delete/" + surveyId);
+		location.assign("/owner/study/deletesurvey/" + surveyId);
 	}
 		
 }
+
+$(document).ready(function(){
+
+    
+	$("#editDescription").click(function() {
+		promptDialog.open('Please enter a new description', $('#description').text(), 
+			function() {
+		});
+	});
+});
 
 </script>
 
@@ -33,6 +108,10 @@ h4 {
     display:inline;
 }
 
+a{
+	cursor:pointer;
+}
+
 </style>
 
 <div class='row'>
@@ -41,7 +120,7 @@ h4 {
 <br>
 <div class='row'>
 		<div class="span2 offset1 descriptionTd"><h4><i>Description:</i></h4></div>
-		<div class="span9 descriptionTd" style="color:navy;"><h4><?php echo $this->study["Description"]; ?></h4>&nbsp;&nbsp; [Edit]</div>
+		<div class="span9 descriptionTd" style="color:navy;"><h4><span id='description'><?php echo $this->study["Description"]; ?></span></h4>&nbsp;&nbsp; <span id='editDescription'><a>[Edit]</a></span></div>
 </div>
 <br>
 
@@ -72,3 +151,5 @@ h4 {
 </div>
 </div>
 <?php endif; ?>
+
+

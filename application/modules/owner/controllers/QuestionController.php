@@ -3,7 +3,6 @@
 require_once 'survey/Form/QuestionCreate.php';
 require_once 'survey/Model/Question.php';
 require_once 'enums.php';
-require_once 'shared.php';
 require_once '../application/modules/owner/models/QuestionMapper.php';
 require_once '../application/modules/owner/models/SurveyMapper.php';
 require_once '../application/modules/owner/models/UserVerification.php';
@@ -62,6 +61,8 @@ class Owner_QuestionController extends Zend_Controller_Action
 				
 				if (count($question) < 1) {
 					$response = "ERROR:database returned no value";
+				} else if (count($question) > 1) {
+					$response = "ERROR:database returned too many values";
 				}
 				else {
 					
@@ -314,6 +315,9 @@ class Owner_QuestionController extends Zend_Controller_Action
 		
 				if (count($question) < 1) {
 					echo "ERROR:database returned no value";
+					return;
+				} else if (count($question) > 1) {
+					echo "ERROR:database returned too many values";
 					return;
 				}
 				else {

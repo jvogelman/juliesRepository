@@ -1,3 +1,10 @@
+label {
+  display: inline-block;
+}
+
+
+/*
+
 body {
   margin: 0; 
   padding: 0; 
@@ -16,13 +23,13 @@ body a {
 body a:hover {
   text-decoration: underline;
 }
-/*
+
 #header {
   height: 100px;
   background: Burlywood;
   font-family: Georgia;
   font-style: italic;
-}*/
+}
 
 #navPanel {
 	background-color:black;
@@ -64,8 +71,7 @@ body a:hover {
 #menu a {
   color: white;
   font-size: 12pt;
-  /*border: solid 4px white;*/
-  /*padding: 4px;*/
+  
   margin-left: 10px;
   margin-right: 10px;
 }
@@ -73,7 +79,6 @@ body a:hover {
 #menu a:hover {
   color: red;
   font-size: 12pt;
-  /*border: solid 4px red;*/
   text-decoration: none;
 }
 
@@ -139,3 +144,5 @@ form ul.errors {
 * html #opaque {
     position: absolute;
 }
+
+*/

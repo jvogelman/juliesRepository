@@ -1,7 +1,7 @@
 <?php
 
-require_once 'shared.php';
 require_once '../application/modules/owner/models/UserVerification.php';
+require_once '../application/modules/owner/models/SurveyMapper.php';
 
 class Owner_StudyController extends Zend_Controller_Action
 {
@@ -35,6 +35,8 @@ class Owner_StudyController extends Zend_Controller_Action
 		$studies = $q->fetchArray();
 		if (count($studies) < 1) {
 			throw new Zend_Controller_Action_Exception('No study found with ID = ' . $input->studyId);
+		} else if (count($studies) > 1) {
+			throw new Zend_Controller_Action_Exception('Multiple studies found with ID = ' . $input->studyId);
 		}
 		
 		// get all surveys that belong to this study
@@ -49,7 +51,8 @@ class Owner_StudyController extends Zend_Controller_Action
 		$this->view->surveys = $surveys;
 	}
 	
-	public function deleteAction()
+	// delete a survey
+	public function deletesurveyAction()
 	{
 		session_start();
 		
@@ -70,15 +73,17 @@ class Owner_StudyController extends Zend_Controller_Action
 		
 		if ($input->isValid())
 		{			
+			$userVerification = new Owner_Model_UserVerification();
+			$userVerification->verifyUserMatchesSurvey($input->surveyId);
+			
+			$surveyMapper = new Owner_Model_SurveyMapper();
+			$study = $surveyMapper->getField('StudyID', $input->surveyId);
+			
 			// delete this survey
-			$q = Doctrine_Query::create()
-				->delete('Survey_Model_Survey s')
-				->where('s.ID = ' . $input->surveyId)
-				->addWhere('s.OwnerID = ' . $userId);
-			$q->execute();
+			$surveyMapper->delete($input->surveyId);
 		}
 
-		$this->_redirect('/owner/study/index');
+		$this->_redirect('/owner/study/show/' . $study);
 	}
 	
 	public function createAction(){

@@ -1,6 +1,5 @@
 <?php
 
-require_once 'shared.php';
 require_once '../application/modules/owner/models/QuestionMapper.php';
 require_once '../application/modules/owner/models/SurveyMapper.php';
 require_once '../application/modules/owner/models/UserVerification.php';
