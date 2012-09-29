@@ -3,6 +3,7 @@ require_once 'enums.php';
 
 ?>
 
+<script type="text/javascript" src="/js/PromptDialog.js"></script>
 
 <script type="text/javascript">
 
@@ -20,63 +21,6 @@ String.prototype.trim = function() {
 };
 
 var promptDialog = new PromptDialog();
-
-function PromptDialog() {
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// PRIVATE VARIABLES
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////		
-		
-	var _dlg = $('<div id="promptDialog"></div>')
-	//.html('<p><span id="prompt"></span></p><p><input type="text" id="promptTextField"/></p><p><input type="submit" value="Okay"/>' + 
-	//		'<button id="cancelPromptDialog">Cancel</button></p>')
-	.html('<p><input type="text" id="promptTextField" size="70"/></p><p><button id="okayPromptDialog">Okay</button>' + 
-			'<button id="cancelPromptDialog">Cancel</button></p>')
-	.dialog({
-		autoOpen: false,
-		//title: 'Edit Question',
-		modal: true,
-		//width:'auto'
-		width: 700,
-		//height: window.innerHeight - 50,
-		height: 'auto'
-	});
-
-	var _this = this;
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//PRIVATE METHODS
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	$('#cancelPromptDialog').live('click', function(){
-		_dlg.dialog('close');
-		_dlg.unbind('submit'); // ### this doesn't make sense and should be replaced by unbinding click from okayPromptDialog
-	});
-
-	$('#okayPromptDialog').live('click', function(){
-		_dlg.dialog('close');
-		_dlg.unbind('submit'); // ### this doesn't make sense and should be replaced by unbinding click from okayPromptDialog
-	});
-	
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//PRIVILEGED METHODS
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-	this.open = function(prompt, textFieldVal, submitFunction) {
-		//_dlg.html(html);
-		//$('#promptDialog #prompt').html(prompt);
-		_dlg.dialog('option', 'title', prompt);
-		$('#promptTextField').val(textFieldVal);
-
-		_dlg.dialog('open');
-
-		$('#okayPromptDialog').click(submitFunction);
-	}
-
-	
-}
-
 
 var editQDialog = new EditQDialog();
 
@@ -533,18 +477,7 @@ function EditQDialog() {
 	}*/
 
 	$(window).load(function(){
-		// scroll to the question we were editing...(if we were editing one)
-    	/*if ($.cookie('scrollToQuestionId') != null) {
-			var questionId = $.cookie('scrollToQuestionId');
-			// find the hidden question ID with this value
-			var question = $('.questionId[value=' + questionId + ']');
-			if (question.length > 0) {
-				var pos = $(question).closest('.QuestionDiv').offset().top;
-				$('html, body').animate({scrollTop:pos}, 'fast');
-				$.cookie('scrollToQuestionId', null); // clear the cookie
-			}
-        }*/
-
+		
         if ($.cookie('scrollToPos') != null) {
             var pos = $.cookie('scrollToPos');
         	$('html, body').animate({scrollTop:pos}, 'fast');
@@ -570,26 +503,28 @@ function EditQDialog() {
     
     $(document).ready(function(){
 
-        
-		$("#EditDescriptionButton").click(function() {
-        	var description = $('#Description').val();
-            var surveyId = $('#SurveyId').val();
-            //run ajax
-            $.post('/owner/survey/updatedescription',
-            	{'description' : description, 'surveyId' : surveyId },
-                //callback function
-                function (response) {
-                         
-                   	if (response.substr(0,5) == "ERROR") {
-                       	alert("Error: " + response.substr(6));
-                    } else {
-                       	alert("Description updated");
-                        $("#Description").val(response);
-                    }
-                }
-            );
-                  
-        });
+
+    	$("#editDescription").click(function() {
+    		promptDialog.open('Please enter a new description', $('#description').text(), 
+    			function() {
+	            	var description = $('#promptTextField').val();
+	                var surveyId = $('#SurveyId').val();
+	                //run ajax
+	                $.post('/owner/survey/updatedescription',
+	                	{'description' : description, 'surveyId' : surveyId },
+	                    //callback function
+	                    function (response) {
+	                             
+	                       	if (response.substr(0,5) == "ERROR") {
+	                           	alert("Error: " + response.substr(6));
+	                        } else {
+	                           	$("#description").text(response);
+	                        }
+	                    }
+	                );
+    			});
+    	});
+    	
 
         $('.pageNameEditButton').click(function() {
             // is there currently a name? If so, populate it in the prompt
@@ -912,13 +847,12 @@ $survey = $this->survey;
 
 
 <h2><?php echo $survey["Name"]; ?></h2>
-<table>
-	<tr>
-		<td class="descriptionTd">Description:</td>
-		<td class="descriptionTd"><textarea rows="3" cols="70" id="Description"><?php echo $survey["Description"]; ?></textarea></td>
-		<td class="descriptionTd"><button id="EditDescriptionButton">Edit</button></td>
-	</tr>
-</table>
+
+<div class='row'>
+<h4>Description:&nbsp; &nbsp;<span id='description'><?php echo $survey["Description"]; ?></span>&nbsp;&nbsp; </h4><span id='editDescription'><a>[Edit]</a></span>
+</div>
+
+
 <br>
 <p align='center'><button class='pageAddButton'>Add Page</button>
 <input type='hidden' class='page' value='1'></input></p>

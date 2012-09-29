@@ -2,6 +2,9 @@ label {
   display: inline-block;
 }
 
+a{
+	cursor:pointer;
+}
 
 /*
 

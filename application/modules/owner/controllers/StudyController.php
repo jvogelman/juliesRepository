@@ -29,7 +29,7 @@ class Owner_StudyController extends Zend_Controller_Action
 		
 		// get information about the study
 		$q = Doctrine_Query::create()
-			->select('study.Name, study.Description')
+			->select('study.Name, study.Description, study.ID')
 			->from('Survey_Model_Study study')
 			->where('study.ID = ?', $input->studyId);
 		$studies = $q->fetchArray();
@@ -85,6 +85,60 @@ class Owner_StudyController extends Zend_Controller_Action
 
 		$this->_redirect('/owner/study/show/' . $study);
 	}
+	
+
+	// ajax function: update the survey Description in table and return resulting Description
+	public function updatedescriptionAction() {
+	
+		try
+		{
+			$this->_helper->viewRenderer->setNoRender();
+			$this->_helper->getHelper('layout')->disableLayout();
+				
+			session_start();
+				
+			$userVerification = new Owner_Model_UserVerification();
+			$userId = $userVerification->getUserId();
+				
+			$validators = array(
+					'studyId' => array('NotEmpty', 'Int'),
+					'description' => array()
+			);
+				
+			$filters = array(
+					'studyId' => array('HtmlEntities', 'StripTags', 'StringTrim'),
+					'description' => array('HtmlEntities', 'StringTrim') 
+			);
+				
+	
+	
+			$input = new Zend_Filter_Input($filters, $validators);
+			$input->setData($this->getRequest()->getParams());
+				
+			$userVerification->verifyUserMatchesStudy($input->studyId);
+	
+			$response = "";
+				
+			if ($input->isValid())
+			{
+				$q = Doctrine_Query::create()
+				->update('Survey_Model_Study s')
+				->set('s.Description', '?', $input->description)
+				->addWhere('s.ID = ?', $input->studyId);
+				$q->execute();
+				$response = $input->description;
+			}
+			else {
+				$response = "ERROR:invalid input";
+			}
+		}
+		catch (Exception $e){
+			$response = "ERROR:page threw exception: " . $e;
+		}
+	
+		echo $response;
+	}
+	
 	
 	public function createAction(){
 
