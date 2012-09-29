@@ -14,8 +14,12 @@
   <li class="nav-header"><?php echo $this->studyName; ?></li>
   <li><a href="#">Participants</a></li>
   <li class="nav-header">Surveys</li>
-  <?php foreach ($this->surveyNames as $surveyName) {
-	echo '<li><a href="#">' . $surveyName . '</a></li>';
+  <?php 
+  if (isset($this->surveyNames)) {
+  	foreach ($this->surveyNames as $surveyId => $surveyName) {
+		echo '<li><a href="/owner/survey/show/' . $surveyId . '">' . $surveyName . '</a></li>';
+		
+	}
 	}
 	?>
 </ul>

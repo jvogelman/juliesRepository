@@ -11,6 +11,8 @@ class Owner_SurveyController extends Zend_Controller_Action
 		session_start();		
 		
 		$userVerification = new Owner_Model_UserVerification();
+		$surveyMapper = new Owner_Model_SurveyMapper();
+		
 		$userId = $userVerification->getUserId();
 		
 		
@@ -109,10 +111,8 @@ class Owner_SurveyController extends Zend_Controller_Action
 			}
 
 
-			$this->view->studyName = 'Best Study in the World';
-			$this->view->surveyNames = array();
-			$this->view->surveyNames[] = 'Favorite Color';
-			$this->view->surveyNames[] = 'Depression and Anxiety';
+			$this->view->studyName = $surveyMapper->getStudyName($surveyId);
+			$this->view->surveyNames = $surveyMapper->getSurveysInStudy($surveyId);
 			
 			$this->view->questions = $quest;
 			$this->view->selections = $selections;

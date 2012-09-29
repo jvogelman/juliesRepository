@@ -337,6 +337,43 @@ class Owner_Model_SurveyMapper
 	
 		return $surveys[0][$fieldName];
 	}
+	
+	function getStudyName($surveyId) {
+		$q = Doctrine_Query::create()
+		->select('study.Name')
+		->from('Survey_Model_Study study')
+		->leftJoin('study.Survey_Model_Survey s')
+		->addWhere('s.ID = ?', $surveyId);
+		$studies = $q->fetchArray();
+
+		if (count($studies) < 1) {
+			throw new Zend_Controller_Action_Exception('No study found associated with survey ID ' . $surveyId);
+		} else if (count($studies) > 1) {
+			throw new Zend_Controller_Action_Exception('Multiple surveys found associated with survey ID ' . $surveyId);
+		}
+		
+		return $studies[0]['Name'];
+	}
+	
+	function getSurveysInStudy($surveyId){
+		// get study ID
+		$studyId = $this->getField('StudyID', $surveyId);
+		
+		// get all surveys in this study
+		$q = Doctrine_Query::create()
+		->select('s.ID, s.Name')
+		->from('Survey_Model_Survey s')
+		->addWhere('s.StudyID = ?', $studyId);
+		$surveys = $q->fetchArray();
+		
+		// now build an array of key survey ID to value survey name
+		$surveyMap = array();
+		foreach ($surveys as $survey) {
+			$surveyMap[$survey['ID']] = $survey['Name'];
+		}
+		
+		return $surveyMap;
+	}
 }
 
 ?>

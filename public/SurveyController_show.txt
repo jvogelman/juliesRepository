@@ -1,0 +1,1 @@
+studyname = Super awesome study\nsurveyNames: Array, 2\n

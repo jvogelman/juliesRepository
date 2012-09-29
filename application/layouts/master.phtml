@@ -13,12 +13,6 @@
 	<body> 
 		<div id="header">
 		<h1><img src="/img/logo.gif" /></h1>
-		 <!--  <table id="navPanel"><tr>
-			<td class="navPanelLabel" id="mySurveys" onclick="location.assign('/owner/studylist/index')">My Surveys</td>
-			<td class="navPanelLabel" id="createSurvey" onclick="location.assign('/owner/studylist/create')">Create Survey</td>
-			<td id="navPanelEmpty"></td>
-			<td class="navPanelLabel" id="logInOut">Log In</td>
-		</tr></table>--> 
 			
 			<div class="navbar">
 	  			<div class="navbar-inner">
@@ -49,7 +43,7 @@
 	    </div></div><br>
 	    
     	<div class='row-fluid'>
-    		<?php if (isset($this->studyName) && isset($this->surveyNames)) { ?>
+    		<?php if (isset($this->studyName)) {// && isset($this->surveyNames)) { ?>
     			<div class='span2 offset1'>
     		
     			<?php echo $this->partial('partials/menu.phtml', 
