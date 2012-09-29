@@ -4,6 +4,9 @@ require_once 'survey/Form/QuestionCreate.php';
 require_once 'survey/Model/Question.php';
 require_once 'enums.php';
 require_once 'shared.php';
+require_once '../application/modules/owner/models/QuestionMapper.php';
+require_once '../application/modules/owner/models/SurveyMapper.php';
+require_once '../application/modules/owner/models/UserVerification.php';
 
 class Owner_QuestionController extends Zend_Controller_Action
 {
@@ -18,7 +21,8 @@ class Owner_QuestionController extends Zend_Controller_Action
 			$this->_helper->viewRenderer->setNoRender();
 			$this->_helper->getHelper('layout')->disableLayout();
 			
-			$userId = getUserId();
+			$userVerification = new Owner_Model_UserVerification();
+			$userId = $userVerification->getUserId();
 			
 			$validators = array(
 					'surveyId' => array('NotEmpty', 'Int'),
@@ -38,7 +42,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 			
 			if ($input->isValid())
 			{
-				verifyUserMatchesQuestion($input->questionId);
+				$userVerification->verifyUserMatchesQuestion($input->questionId);
 				
 				$q = Doctrine_Query::create()
 					->select('q.*, 
@@ -198,9 +202,11 @@ class Owner_QuestionController extends Zend_Controller_Action
 			
 			
 			if ($input->isValid())	{		
-				verifyUserMatchesSurvey($input->surveyId);
+				$userVerification = new Owner_Model_UserVerification();
+				$userVerification->verifyUserMatchesSurvey($input->surveyId);
 				
-				$questionID = $this->addQuestionToPage($input->surveyId, $input->page, $input->index);
+				$questionMapper = new Owner_Model_QuestionMapper();
+				$questionID = $questionMapper->add($input->surveyId, $input->page, $input->index);
 		
 				// redirect to showEditAction
 				$this->_redirect('/owner/question/showedit?surveyId=' . $input->surveyId . '&questionId=' . $questionID);
@@ -212,30 +218,6 @@ class Owner_QuestionController extends Zend_Controller_Action
 		
 		echo $response;
 		fwrite($fh, $response);
-	}
-	
-	public function addQuestionToPage($surveyId, $pageIndex, $index) {
-		
-		$userId = getUserId();
-		
-		// get page ID corresponding to page index
-		$pageId = getPageAtIndex($surveyId, $pageIndex);
-	
-		// first update the other indices in this page
-		incrementQuestionIndices($surveyId, $userId, $pageId, $index);
-		
-		// add new question to database
-		$q = new Survey_Model_Question;
-		$q->Text = '';
-		$q->SurveyID = $surveyId;
-		$q->QuestionIndex = $index;
-		$q->PageID = $pageId;
-		$q->CategoryID = enums_QuestionCategory::Undefined;
-		$q->RequireAnswer = 0;
-		$q->save();
-		$id = $q['ID'];
-		
-		return $id;
 	}
 	
 	
@@ -255,7 +237,8 @@ class Owner_QuestionController extends Zend_Controller_Action
 		$input = new Zend_Filter_Input($filters, $validators);
 		$input->setData($this->getRequest()->getParams());
 
-		verifyUserMatchesQuestion($input->questionId);		
+		$userVerification = new Owner_Model_UserVerification();
+		$userVerification->verifyUserMatchesQuestion($input->questionId);		
 
 
 		// get corresponding survey ID 
@@ -269,8 +252,9 @@ class Owner_QuestionController extends Zend_Controller_Action
 		
 		$conn = Doctrine_Manager::connection();
 		$conn->beginTransaction();		
+		$mapper = new Owner_Model_QuestionMapper();
 		try {
-			deleteQuestionFromPage($input->questionId);		
+			$mapper->delete($input->questionId);
 		
 			$conn->commit();
 		} catch (Exception $exc) {
@@ -289,8 +273,9 @@ class Owner_QuestionController extends Zend_Controller_Action
 		{
 			$this->_helper->viewRenderer->setNoRender();
 			$this->_helper->getHelper('layout')->disableLayout();
-				
-			$userId = getUserId();
+			
+			$userVerification = new Owner_Model_UserVerification();
+			$userId = $userVerification->getUserId();
 				
 				
 			$validators = array(
@@ -316,7 +301,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 				
 			if ($input->isValid())
 			{
-				verifyUserMatchesQuestion($input->questionId);
+				$userVerification->verifyUserMatchesQuestion($input->questionId);
 				
 				$q = Doctrine_Query::create()
 					->select('q.ID, q.RequireAnswer, c.Name as CategoryName')
@@ -383,7 +368,8 @@ class Owner_QuestionController extends Zend_Controller_Action
 		
 		session_start();
 		
-		$userId = getUserId();
+		$userVerification = new Owner_Model_UserVerification();
+		$userId = $userVerification->getUserId();
 		
 		// first do the general stuff that applies to all question types
 		
@@ -417,7 +403,7 @@ class Owner_QuestionController extends Zend_Controller_Action
 			if ($input->isValid())
 			{
 				// verify that this user is authorized to update this survey
-				verifyUserMatchesQuestion($input->questionId);
+				$userVerification->verifyUserMatchesQuestion($input->questionId);
 				
 				$q = Doctrine_Query::create()
 					// #### for some reason, I can't specify q.SurveyID here and actually get it (as opposed to s.ID)
@@ -474,26 +460,10 @@ class Owner_QuestionController extends Zend_Controller_Action
 							
 							// update Selections	
 							// each selection may or may not exist: to simplify, just delete all selections and add them back in
-							$q = Doctrine_Query::create()
-								->delete('Survey_Model_Selection s')
-								->addWhere('s.QuestionID = ?', $input->questionId);
-							$q->execute();
-							
+							$questionMapper = new Owner_Model_QuestionMapper();
+							$questionMapper->deleteSelections($input->questionId);
 							$selections = $this->getRequest()->getParam('selection');
-							for ($i = 1; $i <= count($selections); $i++) {
-								// insert 
-								
-								if ($selections[$i] != ''){	// #### what if middle element is empty? let's use javascript to prevent that
-									$selectionText = $selections[$i];
-									$s = new Survey_Model_Selection;
-									$s->SelectionIndex = $i;
-									$s->Text = $selectionText;
-									$s->QuestionID = $input->questionId;
-								
-									$s->save();
-								}
-								
-							}
+							$questionMapper->addSelections($input->questionId, $selections);
 							
 							// update "Other" field
 							
@@ -725,52 +695,30 @@ class Owner_QuestionController extends Zend_Controller_Action
 		);
 			
 		$input = new Zend_Filter_Input($filters, $validators);
-		$input->setData($this->getRequest()->getParams());	
-		
-		$userId = getUserId();
-		verifyUserMatchesQuestion($input->questionId);
-		
-		
-		// get the current page/question index
-		$q = Doctrine_Query::create()
-			->select('q.PageID, q.QuestionIndex')
-			->from('Survey_Model_Question q')
-			->addWhere('q.ID = ' . $input->questionId);
-		$question = $q->fetchArray();
-		$origPageId = $question[0]['PageID'];
-		$origIndex = $question[0]['QuestionIndex'];		
-		
-		// get new page ID
-		$newPageId = getPageAtIndex($input->surveyId, $input->page);
-
-		// use a transaction so that either all or no changes get committed: 
+		$input->setData($this->getRequest()->getParams());
+	
+		$userVerification = new Owner_Model_UserVerification();
+		$userId = $userVerification->getUserId();
 		
 		$conn = Doctrine_Manager::connection();
 		$conn->beginTransaction();
+
 		try {
-		
-			incrementQuestionIndices($input->surveyId, $userId, $newPageId, $input->newQuestionIndex);				
+			$surveyMapper = new Owner_Model_SurveyMapper();
+			$pageId = $surveyMapper->getPageAtIndex($input->surveyId, $input->page);
 			
-			// update the Question with the new page/index				
-			$q = Doctrine_Query::create()
-				->update('Survey_Model_Question q')
-				->set('q.QuestionIndex' ,'?',  $input->newQuestionIndex)
-				->set('q.PageID', '?', $newPageId)
-				->where('q.ID = ?', $input->questionId);
-			$q->execute();
-					
-			decrementQuestionIndices($input->surveyId, $userId, $origPageId, $origIndex + 1);
-		
+			$questionMapper = new Owner_Model_QuestionMapper();
+			$questionMapper->move($input->surveyId, $input->questionId, $pageId, $input->newQuestionIndex);
+			
 			$conn->commit();
 		} catch (Exception $exc) {
 			$conn->rollback();
 			throw $exc;
 		}
-		
-		
+			
 		$this->_redirect('/owner/survey/show/' . $input->surveyId);
 	}
-	
+			
 
 	public function copyAction() {
 		session_start();
@@ -791,13 +739,19 @@ class Owner_QuestionController extends Zend_Controller_Action
 		$input = new Zend_Filter_Input($filters, $validators);
 		$input->setData($this->getRequest()->getParams());
 	
-		$userId = getUserId();
+		$userVerification = new Owner_Model_UserVerification();
+		$userId = $userVerification->getUserId();
 		
 		$conn = Doctrine_Manager::connection();
 		$conn->beginTransaction();
+
 		try {
-			$pageId = getPageAtIndex($input->surveyId, $input->page);
-			copyQuestion($input->surveyId, $input->questionId, $pageId, $input->newQuestionIndex);
+			$surveyMapper = new Owner_Model_SurveyMapper();
+			$pageId = $surveyMapper->getPageAtIndex($input->surveyId, $input->page);
+			
+			$questionMapper = new Owner_Model_QuestionMapper();
+			$questionMapper->copy($input->surveyId, $input->questionId, $pageId, $input->newQuestionIndex);
+			
 			$conn->commit();
 		} catch (Exception $exc) {
 			$conn->rollback();

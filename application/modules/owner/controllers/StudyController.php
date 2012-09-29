@@ -9,7 +9,8 @@ class Owner_StudyController extends Zend_Controller_Action
 	{
 		session_start();
 		
-		$userId = getUserId();
+		$userVerification = new Owner_Model_UserVerification();
+		$userId = $userVerification->getUserId();
 
 		// set filters and validators for GET input
 		$filters = array(
@@ -23,7 +24,7 @@ class Owner_StudyController extends Zend_Controller_Action
 		$input = new Zend_Filter_Input($filters, $validators);
 		$input->setData($this->getRequest()->getParams());
 		
-		verifyUserMatchesStudy($input->studyId);
+		$userVerification->verifyUserMatchesStudy($input->studyId);
 		
 		// get information about the study
 		$q = Doctrine_Query::create()
@@ -51,7 +52,8 @@ class Owner_StudyController extends Zend_Controller_Action
 	{
 		session_start();
 		
-		$userId = getUserId(); 
+		$userVerification = new Owner_Model_UserVerification();
+		$userId = $userVerification->getUserId();
 		
 		// set filters and validators for GET input
 		$filters = array(
@@ -82,7 +84,8 @@ class Owner_StudyController extends Zend_Controller_Action
 
 		session_start();
 		
-		$userId = getUserId();
+		$userVerification = new Owner_Model_UserVerification();
+		$userId = $userVerification->getUserId();
 
 		$form = new Survey_Form_SurveyCreate();
 		$this->view->form = $form;

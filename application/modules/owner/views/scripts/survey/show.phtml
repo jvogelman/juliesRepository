@@ -923,7 +923,8 @@ for ($i = 1; $i <= $survey['NumPages']; $i++): // go through the pages
 			echo '<span class="pageName">' . $this->pages[$i] . '</span>&nbsp;&nbsp;&nbsp;&nbsp;' .
 				'<button class="pageNameEditButton">Edit Name</button>';
 		} else {
-			echo '<button class="pageNameEditButton">Add Name</button>'; 
+			echo '<span class="pageName"></span>&nbsp;&nbsp;&nbsp;&nbsp;' .
+				'<button class="pageNameEditButton">Add Name</button>'; 
 		}
 		?>
 		<button class='pageDeleteButton'>Delete</button> 

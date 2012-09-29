@@ -1,5 +1,6 @@
 <?php
 require_once 'shared.php';
+require_once '../application/modules/owner/models/UserVerification.php';
 
 class Owner_StudyListController extends Zend_Controller_Action
 {
@@ -20,7 +21,8 @@ class Owner_StudyListController extends Zend_Controller_Action
 	{
 		session_start();
 		
-		$userId = getUserId();
+		$userVerification = new Owner_Model_UserVerification();
+		$userId = $userVerification->getUserId();
 
 		// get all studies owned by this user
 		$q = Doctrine_Query::create()
