@@ -2,6 +2,11 @@
 
 function PromptDialog() {
 	
+	// this is intended as a singleton, so if it already exists, return the singleton
+	if ($('#promptDialog').size() > 1) {
+		return _this;
+	}
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE VARIABLES
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////	
@@ -14,7 +19,7 @@ function PromptDialog() {
 	  + '<h4 id="promptDialogLabel"></h4>'
 	  + '</div>'
 	  + '<div class="modal-body">'
-	  + '<p><input type="text" id="promptTextField" size="70"/></p>'
+	  + '<p><input type="text" id="promptTextField" size="70"/></p>'//<p><span id="extra"></span></p>'
 	  + '</div>'
 	  + '<div class="modal-footer">'
 	  + '<button id="okayPromptDialog" class="btn btn-primary">Okay</button> '
@@ -46,18 +51,20 @@ function PromptDialog() {
 
 
 	this.open = function(prompt, textFieldVal, submitFunction) {
-		/*
-		_dlg.dialog('option', 'title', prompt);
-		$('#promptTextField').val(textFieldVal);
-
-		_dlg.dialog('open');
-
-		$('#okayPromptDialog').click(submitFunction);*/
 		$('#promptDialogLabel').text(prompt);
 		$('#promptTextField').val(textFieldVal);
 		$('#promptDialog').modal('show');
 		$('#okayPromptDialog').click(submitFunction);
 	};
 
+	/*this.append = function(moreHtml) {
+		$('#promptDialog #extra').append(moreHtml);
+	};
 	
+	// clear what was appended in append
+	this.clear = function() {
+		$('#promptDialog #extra').children().remove();
+	};*/
+	
+	return _this;
 }

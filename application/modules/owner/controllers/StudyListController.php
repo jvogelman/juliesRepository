@@ -1,5 +1,6 @@
 <?php
 require_once '../application/modules/owner/models/UserVerification.php';
+require_once '../application/modules/owner/models/UserMapper.php';
 require_once '../application/modules/owner/models/StudyMapper.php';
 
 class Owner_StudyListController extends Zend_Controller_Action
@@ -59,6 +60,50 @@ class Owner_StudyListController extends Zend_Controller_Action
 		$this->_redirect('/owner/studylist/index');
 		
 	}
+	
+	public function createAction(){
+	
+		session_start();
+	
+		$userVerification = new Owner_Model_UserVerification();
+		$userMapper = new Owner_Model_UserMapper();
+		$userId = $userVerification->getUserId();
+	
+		// set filters and validators for POST input
+		$filters = array(
+				'name' => array('HtmlEntities', 'StringTrim'),
+				'description' => array('StringTrim'),
+				'folderId' => array('HtmlEntities', 'StripTags', 'StringTrim')
+		);
+	
+		$validators = array(
+				'name' => array('NotEmpty'),
+				'description' => array(),
+				'folderID' => array()
+		);
+	
+		$input = new Zend_Filter_Input($filters, $validators);
+		$input->setData($this->getRequest()->getParams());
+	
+
+		if ($input->isValid())
+		{
+			$study = new Survey_Model_Study;
+			$study->Name = $input->name;
+			$study->Description = $input->description;
+			
+			if ($input->FolderID == null) {
+				$study->FolderID = $userMapper->getFieldCurrentUser('DefaultFolder');
+			} else
+			{
+				$study->FolderID = $input->FolderID;
+			}
+			$study->save();
+		
+			$this->_redirect('/owner/study/show/' . $study->ID);
+		}
+	}			
+			
 }
 
 

@@ -20,11 +20,16 @@ String.prototype.trim = function() {
     return this.replace(/^\s+|\s+$/g, "");
 };
 
-var promptDialog = new PromptDialog();
+var promptDialog = PromptDialog();
 
 var editQDialog = new EditQDialog();
 
 function EditQDialog() {
+
+	// this is intended as a singleton, so if it already exists, return
+	if ($('#editQuestionDialog').size() > 1) {
+		return;
+	}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PRIVATE VARIABLES

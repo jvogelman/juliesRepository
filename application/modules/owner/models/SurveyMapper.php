@@ -6,7 +6,7 @@ require_once '../application/modules/owner/models/QuestionMapper.php';
 
 class Owner_Model_SurveyMapper
 {
-	
+
 	function delete($surveyId) {
 
 		// delete each page in the survey
@@ -373,6 +373,22 @@ class Owner_Model_SurveyMapper
 		}
 		
 		return $surveyMap;
+	}
+	
+	function getFolder($surveyId) {
+
+		$q = Doctrine_Query::create()
+		->select('study.FolderID')
+		->from('Survey_Model_Study study')
+		->innerJoin('study.Survey_Model_Survey as s on s.StudyID = study.ID')
+		->addWhere('s.ID = ?', $surveyId);
+		$studies = $q->fetchArray();
+		if (count($studies) < 1) {
+			throw new Zend_Controller_Action_Exception('Survey ID = ' . $surveyId . ' not found or not linked to study');
+		} else if (count($studies) > 1) {
+			throw new Zend_Controller_Action_Exception('Survey ID = ' . $surveyId . ' matched to more than one survey');
+		}	
+		return $studies[0]['FolderID'];
 	}
 }
 

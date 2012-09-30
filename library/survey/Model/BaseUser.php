@@ -65,6 +65,14 @@ abstract class Survey_Model_BaseUser extends Doctrine_Record
              'fixed' => false,
              'unsigned' => false,
              'primary' => true,
+             'autoincrement' => true,
+             ));
+        $this->hasColumn('DefaultFolder', 'integer', 4, array(
+             'type' => 'integer',
+             'length' => 4,
+             'fixed' => false,
+             'unsigned' => false,
+             'primary' => false,
              'autoincrement' => false,
              ));
     }

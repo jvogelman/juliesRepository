@@ -29,7 +29,7 @@ class Owner_StudyController extends Zend_Controller_Action
 		
 		// get information about the study
 		$q = Doctrine_Query::create()
-			->select('study.Name, study.Description, study.ID')
+			->select('study.Name, study.Description, study.ID, study.FolderID')
 			->from('Survey_Model_Study study')
 			->where('study.ID = ?', $input->studyId);
 		$studies = $q->fetchArray();
@@ -49,6 +49,7 @@ class Owner_StudyController extends Zend_Controller_Action
 		
 		$this->view->study = $studies[0];
 		$this->view->surveys = $surveys;
+		//$this->view->folderId = 
 	}
 	
 	// delete a survey
@@ -73,7 +74,6 @@ class Owner_StudyController extends Zend_Controller_Action
 		
 		if ($input->isValid())
 		{			
-			$userVerification = new Owner_Model_UserVerification();
 			$userVerification->verifyUserMatchesSurvey($input->surveyId);
 			
 			$surveyMapper = new Owner_Model_SurveyMapper();
@@ -146,6 +146,23 @@ class Owner_StudyController extends Zend_Controller_Action
 		
 		$userVerification = new Owner_Model_UserVerification();
 		$userId = $userVerification->getUserId();
+		
+		// set filters and validators for POST input
+		$filters = array(
+				'name' => array('HtmlEntities', 'StringTrim'),
+				'description' => array('StringTrim')
+		);
+		
+		$validators = array(
+				'name' => array('NotEmpty'),
+				'description' => array()
+		);
+		
+		$input = new Zend_Filter_Input($filters, $validators);
+		$input->setData($this->getRequest()->getParams());
+		
+		/*if ($input->isValid())
+		{			
 
 		$form = new Survey_Form_SurveyCreate();
 		$this->view->form = $form;
@@ -165,7 +182,7 @@ class Owner_StudyController extends Zend_Controller_Action
 				$id = $survey->ID;
 				$this->_redirect('/owner/survey/show/' . $id);
 			}
-		}
+		}*/
 	}
 	
 }

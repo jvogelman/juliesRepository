@@ -11,15 +11,19 @@
 </style>
 
 <ul class="nav nav-list">
-  <li class="nav-header"><?php echo $this->studyName; ?></li>
-  <li><a href="#">Participants</a></li>
-  <li class="nav-header">Surveys</li>
-  <?php 
-  if (isset($this->surveyNames)) {
-  	foreach ($this->surveyNames as $surveyId => $surveyName) {
-		echo '<li><a href="/owner/survey/show/' . $surveyId . '">' . $surveyName . '</a></li>';
+  	<li class="nav-header"><?php echo $this->studyName; ?></li>
+  	<li><a href="#">Participants</a></li>
+  	<li class="nav-header">Surveys</li>
+  	<?php 
+  	if (isset($this->surveyNames)) {
+  		foreach ($this->surveyNames as $surveyId => $surveyName) {
+			echo '<li><a href="/owner/survey/show/' . $surveyId . '">' . $surveyName . '</a></li>';
 		
 	}
+	}
+	
+  	if (isset($this->folderId)) {
+		echo '<input type="hidden" id="folderId" value="' . $this->folderId . '"/>';
 	}
 	?>
 </ul>

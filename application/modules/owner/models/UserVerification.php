@@ -43,8 +43,8 @@ class Owner_Model_UserVerification {
 		$studies = $q->fetchArray();
 		if (count($studies) < 1) {
 			throw new Zend_Controller_Action_Exception('Survey ID = ' . $surveyId . ' not found');
-		}
-	
+		} 
+		
 		// verify this study belongs to the owner of this survey
 		$q = Doctrine_Query::create()
 		->select('')

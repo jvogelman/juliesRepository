@@ -113,6 +113,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 
 			$this->view->studyName = $surveyMapper->getStudyName($surveyId);
 			$this->view->surveyNames = $surveyMapper->getSurveysInStudy($surveyId);
+			$this->view->folderId = $surveyMapper->getFolder($surveyId);
 			
 			$this->view->questions = $quest;
 			$this->view->selections = $selections;
