@@ -78,14 +78,14 @@ class Owner_StudyListController extends Zend_Controller_Action
 	
 		$validators = array(
 				'name' => array('NotEmpty'),
-				'description' => array(),
-				'folderID' => array()
+				'description' => array('allowEmpty' => true),
+				'folderID' => array('allowEmpty' => true)
 		);
 	
 		$input = new Zend_Filter_Input($filters, $validators);
 		$input->setData($this->getRequest()->getParams());
 	
-
+		
 		if ($input->isValid())
 		{
 			$study = new Survey_Model_Study;
@@ -94,13 +94,18 @@ class Owner_StudyListController extends Zend_Controller_Action
 			
 			if ($input->FolderID == null) {
 				$study->FolderID = $userMapper->getFieldCurrentUser('DefaultFolder');
-			} else
-			{
+			} else {
 				$study->FolderID = $input->FolderID;
 			}
 			$study->save();
 		
 			$this->_redirect('/owner/study/show/' . $study->ID);
+		} else {
+			$errStr = 'Sorry, the input is invalid: ';
+			foreach ($this->getRequest()->getParams() as $key => $value) {
+				$errStr .= ' parameter: ' . $key . ', value: ' . $value . ';';
+			}
+			throw new Zend_Controller_Action_Exception($errStr);
 		}
 	}			
 			

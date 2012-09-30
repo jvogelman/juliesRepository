@@ -165,7 +165,12 @@ class Owner_QuestionController extends Zend_Controller_Action
 				fwrite($fh, $response);
 			}
 			else {
-				$response = "ERROR:invalid input";
+				$errStr = 'ERROR: Sorry, the input is invalid: ';
+				foreach ($this->getRequest()->getParams() as $key => $value) {
+					$errStr .= ' parameter: ' . $key . ', value: ' . $value . ';';
+				}
+				$response = $errStr;
+				
 			}	
 		}
 		catch (Exception $e){
@@ -211,6 +216,12 @@ class Owner_QuestionController extends Zend_Controller_Action
 		
 				// redirect to showEditAction
 				$this->_redirect('/owner/question/showedit?surveyId=' . $input->surveyId . '&questionId=' . $questionID);
+			} else {
+				$errStr = 'ERROR: Sorry, the input is invalid: ';
+				foreach ($this->getRequest()->getParams() as $key => $value) {
+					$errStr .= ' parameter: ' . $key . ', value: ' . $value . ';';
+				}
+				$response = $errStr;
 			}
 		}
 		catch (Exception $e){
@@ -355,10 +366,13 @@ class Owner_QuestionController extends Zend_Controller_Action
 				
 				
 				$response = $form;
+			} else {
+				$errStr = 'Sorry, the input is invalid: ';
+				foreach ($this->getRequest()->getParams() as $key => $value) {
+					$errStr .= ' parameter: ' . $key . ', value: ' . $value . ';';
+				}
+				throw new Zend_Controller_Action_Exception($errStr);
 			}
-			else {
-				$response = "ERROR:invalid input";
-			}	
 		}
 		catch (Exception $e){
 			$response = "ERROR:page threw exception: " . $e;
@@ -670,6 +684,12 @@ class Owner_QuestionController extends Zend_Controller_Action
 				} else {
 					$this->_redirect('/owner/question/add?surveyId=' . $surveyId . '&page=' . $question[0]['PageNum'] . '&index=' . ($question[0]['QuestionIndex'] + 1));		
 				}
+			} else {
+				$errStr = 'Sorry, the input is invalid: ';
+				foreach ($this->getRequest()->getParams() as $key => $value) {
+					$errStr .= ' parameter: ' . $key . ', value: ' . $value . ';';
+				}
+				throw new Zend_Controller_Action_Exception($errStr);
 			}
 		} catch (Exception $e) {
 			if ($input->hiddenCloseDlg == 1) {

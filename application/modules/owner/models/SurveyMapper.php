@@ -202,7 +202,6 @@ class Owner_Model_SurveyMapper
 		$q = Doctrine_Query::create()
 		->select('q.ID, q.QuestionIndex')
 		->from('Survey_Model_Question q')
-		->leftJoin('q.Survey_Model_Survey s')
 		->where('q.SurveyID = ?', $surveyId)
 		->addWhere('q.PageID = ?', $page)
 		->addWhere('q.QuestionIndex >= ?', $firstIndex)
@@ -223,7 +222,6 @@ class Owner_Model_SurveyMapper
 		$q = Doctrine_Query::create()
 		->select('q.ID, q.QuestionIndex')
 		->from('Survey_Model_Question q')
-		->leftJoin('q.Survey_Model_Survey s')
 		->where('q.SurveyID = ?', $surveyId)
 		->addWhere('q.PageID = ?', $page)
 		->addWhere('q.QuestionIndex >= ?', $firstIndex)
@@ -342,7 +340,7 @@ class Owner_Model_SurveyMapper
 		$q = Doctrine_Query::create()
 		->select('study.Name')
 		->from('Survey_Model_Study study')
-		->leftJoin('study.Survey_Model_Survey s')
+		->innerJoin('study.Survey_Model_Survey as s on s.StudyID = study.ID')
 		->addWhere('s.ID = ?', $surveyId);
 		$studies = $q->fetchArray();
 

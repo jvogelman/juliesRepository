@@ -81,6 +81,12 @@ class Owner_StudyController extends Zend_Controller_Action
 			
 			// delete this survey
 			$surveyMapper->delete($input->surveyId);
+		} else {
+			$errStr = 'Sorry, the input is invalid: ';
+			foreach ($this->getRequest()->getParams() as $key => $value) {
+				$errStr .= ' parameter: ' . $key . ', value: ' . $value . ';';
+			}
+			throw new Zend_Controller_Action_Exception($errStr);
 		}
 
 		$this->_redirect('/owner/study/show/' . $study);
@@ -127,9 +133,12 @@ class Owner_StudyController extends Zend_Controller_Action
 				->addWhere('s.ID = ?', $input->studyId);
 				$q->execute();
 				$response = $input->description;
-			}
-			else {
-				$response = "ERROR:invalid input";
+			}else {
+				$errStr = 'ERROR:Sorry, the input is invalid: ';
+				foreach ($this->getRequest()->getParams() as $key => $value) {
+					$errStr .= ' parameter: ' . $key . ', value: ' . $value . ';';
+				}
+				$response = $errStr;
 			}
 		}
 		catch (Exception $e){

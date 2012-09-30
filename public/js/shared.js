@@ -25,6 +25,11 @@ function post_to_url(path, params, method) {
     form.submit();
 }
 
+// trim spaces before and after a string
+String.prototype.trim = function() {
+    return this.replace(/^\s+|\s+$/g, "");
+};
+
 
 $(document).ready(function(){
 	$('#newStudy').live('click', function(e) {
@@ -36,8 +41,15 @@ $(document).ready(function(){
 				'<h5>Description: </h5>&nbsp;&nbsp;<textarea id="studyDescription"/>');
 		
 		$('#myModal .btn-primary').click(function(e) {
-			var name = $('#studyName').val();
-			var description = $('#studyDescription').val();
+			var name = $('#studyName').val().trim();
+			var description = $('#studyDescription').val().trim();
+			
+			if (name == '') {
+				if ($('#nameError').size() == 0) {
+					$('#myModal .modal-body p').append('<p class="text-error" id="nameError">***Name cannot be empty.***</p>');
+				}
+				return;
+			}
 		
 			post_to_url('/owner/studylist/create/', {'name' : name, 'description' : description, 'folderId' : null}, 'post');
 			

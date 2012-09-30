@@ -119,6 +119,12 @@ class Owner_SurveyController extends Zend_Controller_Action
 			$this->view->selections = $selections;
 			$this->view->childQuestions = $childQuestions;
 			$this->view->pages = $pages;
+		} else {
+			$errStr = 'Sorry, the input is invalid: ';
+			foreach ($this->getRequest()->getParams() as $key => $value) {
+				$errStr .= ' parameter: ' . $key . ', value: ' . $value . ';';
+			}
+			throw new Zend_Controller_Action_Exception($errStr);
 		}
 		
 	}
@@ -163,10 +169,13 @@ class Owner_SurveyController extends Zend_Controller_Action
 					->addWhere('s.ID = ?', $input->surveyId);
 				$q->execute();
 				$response = $input->description;
+			} else {
+				$errStr = 'ERROR:Sorry, the input is invalid: ';
+				foreach ($this->getRequest()->getParams() as $key => $value) {
+					$errStr .= ' parameter: ' . $key . ', value: ' . $value . ';';
+				}
+				$response = $errStr;
 			}
-			else {
-				$response = "ERROR:invalid input";
-			}	
 		}
 		catch (Exception $e){
 			$response = "ERROR:page threw exception: " . $e;
@@ -424,6 +433,12 @@ class Owner_SurveyController extends Zend_Controller_Action
 			}
 
 			$this->_redirect('/owner/survey/show/' . $input->surveyId);
+		} else {
+			$errStr = 'Sorry, the input is invalid: ';
+			foreach ($this->getRequest()->getParams() as $key => $value) {
+				$errStr .= ' parameter: ' . $key . ', value: ' . $value . ';';
+			}
+			throw new Zend_Controller_Action_Exception($errStr);
 		}
 	}
 	
