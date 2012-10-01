@@ -24,6 +24,7 @@ class Owner_StudyListController extends Zend_Controller_Action
 		
 		$userVerification = new Owner_Model_UserVerification();
 		$userId = $userVerification->getUserId();
+		$studyMapper = new Owner_Model_StudyMapper();
 
 		// get all studies owned by this user
 		$q = Doctrine_Query::create()
@@ -32,6 +33,10 @@ class Owner_StudyListController extends Zend_Controller_Action
 		->where('f.OwnerID = ?', $userId);
 		$result = $q->fetchArray();
 		$this->view->records = $result;
+		
+
+		$this->view->studies = $studyMapper->getStudies($userId);
+		
 	}
 	
 	// delete a study

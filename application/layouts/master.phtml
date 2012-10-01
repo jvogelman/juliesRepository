@@ -62,21 +62,22 @@
     	}?> 
       		
       	</div>
+
+      	<?php 
+      	// build a string of studies in the format: ID:Name;ID:Name;
+      	$studiesStr = "";
+      	if (isset($this->studies)) {
+      		foreach ($this->studies as $studyId => $studyName) {
+				$studiesStr .= $studyId . ':' . $studyName . ';';
+			}
+		}
+			
+		echo '<input type="hidden" id="hiddenStudies" value="' . $studiesStr . '" />';      	
+		?>
       	
-<!--  
-<div class="modal hide" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-    <h4 id="myModalLabel"></h4>
-  </div>
-  <div class="modal-body">
-    <p></p>
-  </div>
-  <div class="modal-footer">
-    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-    <button class="btn btn-primary">Okay</button>
-  </div>
-</div>
--->
+
   	</body>
  </html>
+ 
+ 
+ 

@@ -2,6 +2,7 @@
 
 require_once '../application/modules/owner/models/QuestionMapper.php';
 require_once '../application/modules/owner/models/SurveyMapper.php';
+require_once '../application/modules/owner/models/StudyMapper.php';
 require_once '../application/modules/owner/models/UserVerification.php';
 
 class Owner_SurveyController extends Zend_Controller_Action
@@ -12,6 +13,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 		
 		$userVerification = new Owner_Model_UserVerification();
 		$surveyMapper = new Owner_Model_SurveyMapper();
+		$studyMapper = new Owner_Model_StudyMapper();
 		
 		$userId = $userVerification->getUserId();
 		
@@ -113,6 +115,7 @@ class Owner_SurveyController extends Zend_Controller_Action
 
 			$this->view->studyName = $surveyMapper->getStudyName($surveyId);
 			$this->view->surveyNames = $surveyMapper->getSurveysInStudy($surveyId);
+			$this->view->studies = $studyMapper->getStudies($userId);
 			$this->view->folderId = $surveyMapper->getFolder($surveyId);
 			
 			$this->view->questions = $quest;

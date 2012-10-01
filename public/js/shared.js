@@ -81,6 +81,47 @@ $(document).ready(function(){
 	$('#newSurvey').live('click', function(e) {
 		e.preventDefault();
 		
+		var modal = Dialog();
+		
+
+		
+		// build list of studies to add to select
+		var studiesStr = '';
+		var str = $('#hiddenStudies').val();
+		// this string is formatted: ID:Name;ID:Name;
+		while (str != '' && str.indexOf(':') != -1 && str.indexOf(';') != -1) {
+			var id = str.substr(0, str.indexOf(':'));
+			str = str.substr(str.indexOf(':') + 1);
+			var name = str.substr(0, str.indexOf(';'));
+			str = str.substr(str.indexOf(';') + 1);
+			studiesStr += '<option value=' + id + '>' + name + '</option>';
+			//$('#differentStudy').append('<option value=' + id + '>' + name + '</option>');
+		}
+		
+		
+		var msgBody = '<form method="post" action="/owner/study/createsurvey">' + 
+		'<p>Please enter a name and optional description for your survey</p>' +
+		'<h5>Name: </h5>&nbsp;&nbsp;<input type="text" id="surveyName"/>' +
+		'<h5>Description: </h5>&nbsp;&nbsp;<textarea id="surveyDescription"/><br/><hr/>' +
+		'<p>Select a study to add survey to:</p>' +
+		'<p><label class="radio"><input type="radio" name="study" value="currentStudy" checked>Current Study (...)</label></p>' +
+		'<p><label class="radio"><input type="radio" name="study" value="selectStudy">A different study <select name="differentStudy">' + studiesStr + '</select></label></p>' +
+		'<p><label class="radio"><input type="radio" name="study" value="noStudy">Not part of a study</label></p>' +
+		'</form>';
+		modal.open('New Survey',
+				msgBody,
+				function(e) {
+					var name = $('#surveyName').val().trim();
+					var description = $('#surveyDescription').val().trim();
+					
+					if (name == '') {
+						modal.warn('***Name cannot be empty.***');
+						return;
+					}
+					
+					modal.close();
+				});
+		
 	});
 });
 

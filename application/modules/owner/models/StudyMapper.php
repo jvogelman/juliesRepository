@@ -28,4 +28,22 @@ class Owner_Model_StudyMapper
 		$q->execute();
 	}
 	
+	function getStudies($userId){
+		$q = Doctrine_Query::create()
+		->select('study.ID, study.Name')
+		->from('Survey_Model_Study study')
+		->leftJoin('study.Survey_Model_Folder f')
+		->where('f.OwnerID = ?', $userId);
+		
+		$studies = $q->fetchArray();
+		$studiesMap = array();
+		foreach ($studies as $study) {
+			$studiesMap[$study['ID']] = $study['Name'];
+		}
+		
+		return $studiesMap;
+	}
 }
+
+
+

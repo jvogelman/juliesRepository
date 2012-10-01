@@ -76,7 +76,17 @@ function Dialog() {
 	// issue a warning at the bottom of the dialog
 	this.warn = function(warning) {
 		$('#dialog .modal-body-warning').html(warning);
+		// scroll to the warning
+
+		var temp = $('#dialog').closest('html, body');
+		var pos = $('#dialog .modal-body-warning').offset().top;
+		//pos = $('#dialog').height();
+		$('#dialog').closest('body').animate({scrollTop:pos}, 'fast');
+		//$('html, body').animate({scrollTop:pos}, 'fast');
 		
+		//$('#dialog .modal-body-warning').focus();
+		
+		$(document).scrollTop($(document).height());
 	};
 	
 	return _this;

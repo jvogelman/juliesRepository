@@ -2,6 +2,7 @@
 
 require_once '../application/modules/owner/models/UserVerification.php';
 require_once '../application/modules/owner/models/SurveyMapper.php';
+require_once '../application/modules/owner/models/StudyMapper.php';
 
 class Owner_StudyController extends Zend_Controller_Action
 {
@@ -12,6 +13,7 @@ class Owner_StudyController extends Zend_Controller_Action
 		
 		$userVerification = new Owner_Model_UserVerification();
 		$userId = $userVerification->getUserId();
+		$studyMapper = new Owner_Model_StudyMapper();
 
 		// set filters and validators for GET input
 		$filters = array(
@@ -49,6 +51,8 @@ class Owner_StudyController extends Zend_Controller_Action
 		
 		$this->view->study = $studies[0];
 		$this->view->surveys = $surveys;
+
+		$this->view->studies = $studyMapper->getStudies($userId);
 		//$this->view->folderId = 
 	}
 	
