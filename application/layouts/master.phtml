@@ -9,6 +9,7 @@
 		<?php echo $this->jQuery();  ?>
 		<script type="text/javascript" src="/js/jquery/js/jquery.cookie.js"></script>
 		<script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="/js/Dialog.js"></script>
 		<script type="text/javascript" src="/js/shared.js"></script>
 	</head>
 	<body> 
@@ -24,7 +25,9 @@
 					      New
 					      <b class="caret"></b>
 					    </a>
-					    <ul class="dropdown-menu"><li><a href="#myModal" role="button" class="btn" data-toggle="modal" id='newStudy'>Study</a></li><li><a>Survey</a></li><li><a>Folder</a></li></ul>
+					    <ul class="dropdown-menu">
+					    	<li><a id='newStudy'><!--  href="#myModal" role="button" class="btn" data-toggle="modal"--> Study</a></li>
+					    	<li><a id='newSurvey'><!--  href="#myModal" role="button" class="btn" data-toggle="modal"-->Survey</a></li></ul>
 					  </li>
 					</ul>
 				</div>
@@ -60,6 +63,7 @@
       		
       	</div>
       	
+<!--  
 <div class="modal hide" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
@@ -73,6 +77,6 @@
     <button class="btn btn-primary">Okay</button>
   </div>
 </div>
-
+-->
   	</body>
  </html>

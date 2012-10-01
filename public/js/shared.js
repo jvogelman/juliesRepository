@@ -32,11 +32,31 @@ String.prototype.trim = function() {
 
 
 $(document).ready(function(){
+	
+
 	$('#newStudy').live('click', function(e) {
 		e.preventDefault();
 		
+		var modal = Dialog();
+		modal.open('Please enter a name and optional description for your study',
+				'<h5>Name: </h5>&nbsp;&nbsp;<input type="text" id="studyName"/>' +
+				'<h5>Description: </h5>&nbsp;&nbsp;<textarea id="studyDescription"/>',
+				function(e) {
+					var name = $('#studyName').val().trim();
+					var description = $('#studyDescription').val().trim();
+					
+					if (name == '') {
+						modal.warn('***Name cannot be empty.***');
+						return;
+					}
+				
+					post_to_url('/owner/studylist/create/', {'name' : name, 'description' : description, 'folderId' : null}, 'post');
+					
+					modal.close();
+				});
+		
+		/*
 		$('#myModalLabel').text('Please enter a name and optional description for your study');
-		var size = $('#myModal .modal-body p').size();
 		$('#myModal .modal-body p').append('<h5>Name: </h5>&nbsp;&nbsp;<input type="text" id="studyName"/>' +
 				'<h5>Description: </h5>&nbsp;&nbsp;<textarea id="studyDescription"/>');
 		
@@ -53,7 +73,16 @@ $(document).ready(function(){
 		
 			post_to_url('/owner/studylist/create/', {'name' : name, 'description' : description, 'folderId' : null}, 'post');
 			
-		});
+		});*/
+		
+	});
+	
+
+	$('#newSurvey').live('click', function(e) {
+		e.preventDefault();
 		
 	});
 });
+
+
+
